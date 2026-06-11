@@ -1,3 +1,41 @@
+// Check if this is the system browser receiving the OAuth redirect token for the desktop app
+const hash = window.location.hash.substring(1);
+const params = new URLSearchParams(hash);
+const accessToken = params.get('access_token');
+const isDesktopApp = window.location.search.includes('platform=desktop');
+
+if (accessToken && !isDesktopApp) {
+  // We are in the system browser, redirected from Google OAuth.
+  // Send the token to the local server.
+  fetch('/api/save-token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      access_token: accessToken,
+      expires_in: params.get('expires_in') || 3600
+    })
+  })
+  .then(() => {
+    // Replace body with success message
+    document.body.innerHTML = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0f172a; color: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; overflow: hidden; box-sizing: border-box; width: 100vw;">
+        <div style="background-color: #1e293b; padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); max-width: 420px; width: 90%;">
+          <div style="font-size: 4rem; color: #22c55e; margin-bottom: 1rem; line-height: 1;">✓</div>
+          <h1 style="color: #3b82f6; margin-top: 0; font-size: 1.8rem; font-weight: 700;">Login Successful!</h1>
+          <p style="color: #94a3b8; font-size: 1.1rem; line-height: 1.5; margin: 1rem 0 0 0;">You have successfully authenticated with Google. You can close this browser window and return to the TaskFlow desktop app.</p>
+        </div>
+      </div>
+    `;
+  })
+  .catch(err => {
+    console.error('Failed to send token to desktop app:', err);
+    document.body.innerHTML = '<p style="color: red; padding: 20px; text-align: center;">Failed to send login token to the desktop application. Please ensure the app is running.</p>';
+  });
+  
+  // Stop executing the rest of the application in the system browser
+  throw new Error('OAuth Redirect Handled');
+}
+
 import { authService } from './services/auth.js';
 import { db } from './services/database.js';
 import { syncService } from './services/sync.js';

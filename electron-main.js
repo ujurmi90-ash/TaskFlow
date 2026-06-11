@@ -3,16 +3,11 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-// Set User-Agent globally to a standard Chrome browser user agent
-// to bypass Google's "403 disallowed_useragent" block inside Electron.
-app.userAgentFallback = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
-app.on('web-contents-created', (event, contents) => {
-  contents.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-});
 
 let mainWindow;
 let staticServer;
+let pendingToken = null;
 
 function startStaticServer(port) {
   const mimeTypes = {
@@ -30,6 +25,33 @@ function startStaticServer(port) {
   const server = http.createServer((req, res) => {
     // Basic router and file server
     const parsedUrl = req.url.split('?')[0];
+
+    // Handle token endpoints for secure loopback authentication
+    if (req.method === 'POST' && parsedUrl === '/api/save-token') {
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', () => {
+        try {
+          pendingToken = JSON.parse(body);
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'text/plain');
+          res.end('OK');
+        } catch (e) {
+          res.statusCode = 400;
+          res.end('Invalid JSON');
+        }
+      });
+      return;
+    }
+
+    if (req.method === 'GET' && parsedUrl === '/api/get-token') {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ token: pendingToken }));
+      pendingToken = null; // Reset after reading
+      return;
+    }
+
     const webDir = path.join(__dirname, 'www');
     let filePath = path.join(webDir, parsedUrl === '/' ? 'index.html' : parsedUrl);
 
@@ -86,27 +108,11 @@ function createWindow() {
     }
   });
 
-  mainWindow.loadURL('http://localhost:8000');
+  mainWindow.loadURL('http://localhost:8000/?platform=desktop');
 
   // Intercept new window requests (e.g. target="_blank" or window.open)
+  // Force all popup requests (like Google OAuth and external links) to open in the user's default browser.
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    // If opening a Google OAuth popup, allow it to open inside a new Electron window
-    if (url.startsWith('https://accounts.google.com')) {
-      return {
-        action: 'allow',
-        overrideBrowserWindowOptions: {
-          width: 600,
-          height: 600,
-          autoHideMenuBar: true,
-          webPreferences: {
-            nodeIntegration: false,
-            contextIsolation: true,
-            sandbox: true
-          }
-        }
-      };
-    }
-    // Otherwise, open any standard links in the default browser
     shell.openExternal(url);
     return { action: 'deny' };
   });
@@ -117,13 +123,6 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-  // Network-level interceptor to rewrite the User-Agent header for all outgoing network requests.
-  // This guarantees that Google's OAuth servers will never see the "Electron" signature.
-  session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
-    details.requestHeaders['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-    callback({ cancel: false, requestHeaders: details.requestHeaders });
-  });
-
   staticServer = startStaticServer(8000);
   createWindow();
 

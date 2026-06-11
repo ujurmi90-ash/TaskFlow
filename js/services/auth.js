@@ -126,6 +126,34 @@ class AuthService {
   }
 
   signIn() {
+    const isDesktop = window.location.search.includes('platform=desktop');
+    if (isDesktop) {
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CONFIG.GOOGLE_CLIENT_ID}&redirect_uri=http://localhost:8000&response_type=token&scope=${encodeURIComponent(CONFIG.GMAIL_SCOPES)}&prompt=consent`;
+      window.open(authUrl);
+      
+      // Start polling for the token
+      if (this._pollInterval) clearInterval(this._pollInterval);
+      this._pollInterval = setInterval(async () => {
+        try {
+          const res = await fetch('/api/get-token');
+          const data = await res.json();
+          if (data && data.token) {
+            clearInterval(this._pollInterval);
+            this.accessToken = data.token.access_token;
+            const expiresIn = data.token.expires_in || 3600;
+            const expiresAt = Date.now() + expiresIn * 1000;
+            localStorage.setItem('taskflow_access_token', this.accessToken);
+            localStorage.setItem('taskflow_token_expires_at', expiresAt);
+            
+            await this._fetchUserProfile();
+          }
+        } catch (e) {
+          console.error('Polling token error:', e);
+        }
+      }, 1000);
+      return;
+    }
+
     if (this.tokenClient) {
       if (this.accessToken) {
         this.tokenClient.requestAccessToken({ prompt: '' });
@@ -136,6 +164,34 @@ class AuthService {
   }
 
   switchAccount() {
+    const isDesktop = window.location.search.includes('platform=desktop');
+    if (isDesktop) {
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CONFIG.GOOGLE_CLIENT_ID}&redirect_uri=http://localhost:8000&response_type=token&scope=${encodeURIComponent(CONFIG.GMAIL_SCOPES)}&prompt=select_account`;
+      window.open(authUrl);
+      
+      // Start polling for the token
+      if (this._pollInterval) clearInterval(this._pollInterval);
+      this._pollInterval = setInterval(async () => {
+        try {
+          const res = await fetch('/api/get-token');
+          const data = await res.json();
+          if (data && data.token) {
+            clearInterval(this._pollInterval);
+            this.accessToken = data.token.access_token;
+            const expiresIn = data.token.expires_in || 3600;
+            const expiresAt = Date.now() + expiresIn * 1000;
+            localStorage.setItem('taskflow_access_token', this.accessToken);
+            localStorage.setItem('taskflow_token_expires_at', expiresAt);
+            
+            await this._fetchUserProfile();
+          }
+        } catch (e) {
+          console.error('Polling token error:', e);
+        }
+      }, 1000);
+      return;
+    }
+
     if (this.tokenClient) {
       // Force the account selector to appear
       this.tokenClient.requestAccessToken({ prompt: 'select_account' });
@@ -143,6 +199,7 @@ class AuthService {
   }
 
   signOut() {
+    if (this._pollInterval) clearInterval(this._pollInterval);
     if (this.accessToken) {
       try {
         google.accounts.oauth2.revoke(this.accessToken);
