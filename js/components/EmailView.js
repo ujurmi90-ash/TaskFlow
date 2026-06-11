@@ -8,6 +8,7 @@ export class EmailView {
     this.loading = false;
     this.nextPageToken = null;
     this.query = '';
+    this.sortBy = 'date-desc';
   }
 
   render(container) {
@@ -22,17 +23,50 @@ export class EmailView {
       return;
     }
 
+    const importantList = this._getImportantList();
+    
+    // Sort base list by date descending (LIFO)
+    let displayEmails = [...this.emails].sort((a, b) => {
+      const dateA = a.date ? new Date(a.date) : new Date(0);
+      const dateB = b.date ? new Date(b.date) : new Date(0);
+      return dateB - dateA;
+    });
+
+    if (this.sortBy === 'important-only') {
+      displayEmails = displayEmails.filter(e => importantList.includes(e.id));
+    } else if (this.sortBy === 'important-first') {
+      displayEmails.sort((a, b) => {
+        const aImp = importantList.includes(a.id) ? 1 : 0;
+        const bImp = importantList.includes(b.id) ? 1 : 0;
+        if (aImp !== bImp) return bImp - aImp;
+        
+        const dateA = a.date ? new Date(a.date) : new Date(0);
+        const dateB = b.date ? new Date(b.date) : new Date(0);
+        return dateB - dateA;
+      });
+    }
+
     container.innerHTML = `
       <div class="animate-fadeIn">
-        <div class="search-bar mb-lg" style="max-width:100%">
-          <span class="search-icon">🔍</span>
-          <input type="text" placeholder="Search emails (Gmail syntax supported)..." id="email-search" value="${this.query}"/>
-          <button class="btn btn-primary btn-sm" id="email-search-btn">Search</button>
+        <div class="flex flex-wrap gap-md items-center mb-lg">
+          <div class="search-bar" style="max-width:100%; flex:1;">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Search emails (Gmail syntax supported)..." id="email-search" value="${this.query}"/>
+            <button class="btn btn-primary btn-sm" id="email-search-btn">Search</button>
+          </div>
+          <div class="flex items-center gap-xs">
+            <span class="text-xs text-muted font-mono">SORT:</span>
+            <select class="form-select" id="email-sort-select" style="width:auto; height:38px; font-size:var(--text-xs); border-radius:var(--radius-md); padding-right: 32px;">
+              <option value="date-desc" ${this.sortBy === 'date-desc' ? 'selected' : ''}>Newest First</option>
+              <option value="important-first" ${this.sortBy === 'important-first' ? 'selected' : ''}>Important First</option>
+              <option value="important-only" ${this.sortBy === 'important-only' ? 'selected' : ''}>Important Only</option>
+            </select>
+          </div>
         </div>
         <div id="email-list" class="email-list">
           ${this.loading && this.emails.length === 0 ? this._renderSkeleton() : ''}
-          ${this.emails.map(e => this._renderEmailCard(e)).join('')}
-          ${!this.loading && this.emails.length === 0 ? `
+          ${displayEmails.map(e => this._renderEmailCard(e, importantList.includes(e.id))).join('')}
+          ${!this.loading && displayEmails.length === 0 ? `
             <div class="empty-state">
               <div class="empty-icon">📬</div>
               <div class="empty-title">No emails loaded</div>
@@ -57,11 +91,14 @@ export class EmailView {
     }
   }
 
-  _renderEmailCard(e) {
+  _renderEmailCard(e, isImportant) {
     const fromName = this._extractName(e.from);
     const dateStr = this._formatEmailDate(e.date);
     return `
       <div class="email-card" data-email-id="${e.id}">
+        <div class="email-important-toggle" data-email-id="${e.id}" style="cursor:pointer; font-size:1.2rem; user-select:none; margin-right:4px; display:flex; align-items:center;" title="${isImportant ? 'Mark Unimportant' : 'Mark Important'}">
+          ${isImportant ? '⭐' : '☆'}
+        </div>
         <div class="sender-avatar" style="background:${hashColor(fromName)}">${getInitials(fromName)}</div>
         <div class="email-content">
           <div class="email-subject">${this._esc(e.subject || '(no subject)')}</div>
@@ -129,6 +166,22 @@ export class EmailView {
       this._fetchEmails(container);
     });
 
+    // Star toggle event
+    container.querySelectorAll('.email-important-toggle').forEach(toggle => {
+      toggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const emailId = toggle.dataset.emailId;
+        this._toggleImportant(emailId);
+        this.render(container);
+      });
+    });
+
+    // Sort select change
+    container.querySelector('#email-sort-select')?.addEventListener('change', (e) => {
+      this.sortBy = e.target.value;
+      this.render(container);
+    });
+
     // Create task from email
     container.querySelectorAll('.create-task-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -167,7 +220,7 @@ export class EmailView {
     // Click card to open full email details
     container.querySelectorAll('.email-card').forEach(card => {
       card.addEventListener('click', (e) => {
-        if (e.target.closest('.email-actions')) return;
+        if (e.target.closest('.email-actions') || e.target.closest('.email-important-toggle')) return;
         const email = this.emails.find(em => em.id === card.dataset.emailId);
         if (email) {
           EventBus.emit('email:open', email);
@@ -195,4 +248,22 @@ export class EmailView {
   }
 
   _esc(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
+
+  _getImportantList() {
+    try {
+      const val = localStorage.getItem('taskflow_important_emails');
+      return val ? JSON.parse(val) : [];
+    } catch { return []; }
+  }
+
+  _toggleImportant(emailId) {
+    const list = this._getImportantList();
+    const index = list.indexOf(emailId);
+    if (index > -1) {
+      list.splice(index, 1);
+    } else {
+      list.push(emailId);
+    }
+    localStorage.setItem('taskflow_important_emails', JSON.stringify(list));
+  }
 }
