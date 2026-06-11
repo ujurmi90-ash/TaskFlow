@@ -13,13 +13,40 @@ export class TaskDetails {
       owner: ''
     };
     this.loadingEmail = false;
+    this.customProjects = null;
+
+    // Reset cached custom projects on any database / sync updates
+    EventBus.on('tasks:updated', () => {
+      this.customProjects = null;
+    });
   }
 
   render(container) {
+    // Fetch custom projects if not cached yet
+    if (this.customProjects === null) {
+      db.getCustomProjects().then(projects => {
+        this.customProjects = projects;
+        this.render(container);
+      }).catch(err => {
+        console.error('Failed to load custom projects:', err);
+        this.customProjects = [];
+        this.render(container);
+      });
+      container.innerHTML = '<div class="text-center p-xl text-muted">Loading workspace details…</div>';
+      return;
+    }
+
     const tasks = AppState.tasks || [];
     
-    // Extract unique projects dynamically for filtering
-    const allProjects = Array.from(new Set(tasks.map(t => t.project).filter(Boolean))).sort();
+    // Combine default projects, custom database projects, and any projects currently on tasks
+    const allProjects = Array.from(new Set([
+      ...CONFIG.DEFAULT_PROJECTS,
+      ...(this.customProjects || []),
+      ...tasks.map(t => t.project).filter(Boolean)
+    ])).sort();
+
+    // Fetch team members list (custom team members + default fallbacks)
+    const teamMembers = AppState.teamMembers || CONFIG.TEAM_MEMBERS;
 
     // Filter tasks
     const filteredTasks = tasks.filter(t => {
@@ -71,8 +98,15 @@ export class TaskDetails {
               
               <select class="form-select" id="filter-owner" title="Filter by Owner">
                 <option value="">All Owners</option>
-                ${CONFIG.TEAM_MEMBERS.map(m => `<option value="${m}" ${this.filters.owner === m ? 'selected' : ''}>${m}</option>`).join('')}
+                ${teamMembers.map(m => `<option value="${m}" ${this.filters.owner === m ? 'selected' : ''}>${m}</option>`).join('')}
               </select>
+            </div>
+
+            <!-- Quick Action Buttons -->
+            <div class="flex gap-xs mt-sm" style="border-top:1px solid var(--border-color); padding-top:var(--space-sm);">
+              <button class="btn btn-ghost btn-xs text-xs" id="quick-add-project-btn" style="padding:4px 8px; font-size:var(--text-xs); border-radius:var(--radius-sm);" title="Add New Project">+ Project</button>
+              <button class="btn btn-ghost btn-xs text-xs" id="quick-add-person-btn" style="padding:4px 8px; font-size:var(--text-xs); border-radius:var(--radius-sm);" title="Manage Team Members">+ Person</button>
+              <button class="btn btn-primary btn-xs text-xs ml-auto" id="quick-add-task-btn" style="padding:4px 8px; font-size:var(--text-xs); border-radius:var(--radius-sm); background:var(--accent-gradient); border:none;" title="Create New Task">+ Task</button>
             </div>
           </div>
           
@@ -287,6 +321,32 @@ export class TaskDetails {
     handleFilterChange('#filter-priority', 'priority');
     handleFilterChange('#filter-project', 'project');
     handleFilterChange('#filter-owner', 'owner');
+
+    // Quick add actions
+    container.querySelector('#quick-add-project-btn')?.addEventListener('click', async () => {
+      const name = prompt('Enter new project name:');
+      if (name && name.trim()) {
+        const trimmed = name.trim();
+        try {
+          await db.addCustomProject(trimmed);
+          this.customProjects = null; // force reload
+          this.render(container);
+          EventBus.emit('toast:show', { type: 'success', message: 'Project added: ' + trimmed });
+        } catch (err) {
+          EventBus.emit('toast:show', { type: 'error', message: 'Failed to add project: ' + err.message });
+        }
+      }
+    });
+
+    container.querySelector('#quick-add-person-btn')?.addEventListener('click', () => {
+      EventBus.emit('team:manage');
+    });
+
+    container.querySelector('#quick-add-task-btn')?.addEventListener('click', () => {
+      EventBus.emit('task:create', {
+        dateGroup: new Date().toISOString().split('T')[0]
+      });
+    });
 
     // Task list items click selection
     container.querySelectorAll('.task-details-item').forEach(item => {
