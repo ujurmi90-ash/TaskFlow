@@ -86,9 +86,7 @@ async function init() {
         // Reload tasks from DB after sync pulls remote changes
         db.getAllTasks().then(tasks => {
           window.AppState.tasks = tasks;
-          window._syncTriggeredUpdate = true;
-          EventBus.emit('tasks:updated');
-          window._syncTriggeredUpdate = false;
+          EventBus.emit('tasks:updated', { isSync: true });
         });
         db.getTeamMembers().then(members => {
           window.AppState.teamMembers = members;
@@ -121,12 +119,16 @@ async function init() {
     });
 
     // Listen for task updates — trigger sync after local changes
-    EventBus.on('tasks:updated', async () => {
+    EventBus.on('tasks:updated', async (data) => {
       const tasks = await db.getAllTasks();
       window.AppState.tasks = tasks;
 
       // Only sync if this update was NOT triggered by sync itself (prevent loop)
-      if (!window._syncTriggeredUpdate && authService.isSignedIn()) {
+      if (data && data.isSync) {
+        return;
+      }
+
+      if (authService.isSignedIn()) {
         // Small delay to batch rapid changes (e.g. CSV import)
         clearTimeout(window._syncDebounce);
         window._syncDebounce = setTimeout(() => {
