@@ -1,4 +1,4 @@
-const { app, BrowserWindow, shell } = require('electron');
+const { app, BrowserWindow, shell, session } = require('electron');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -77,7 +77,7 @@ function createWindow() {
     width: 1200,
     height: 800,
     title: 'TaskFlow',
-    icon: path.join(__dirname, 'icon-512.png'),
+    icon: path.join(__dirname, 'www', 'icon-512.png'),
     autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: false,
@@ -117,6 +117,13 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // Network-level interceptor to rewrite the User-Agent header for all outgoing network requests.
+  // This guarantees that Google's OAuth servers will never see the "Electron" signature.
+  session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
+    details.requestHeaders['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+    callback({ cancel: false, requestHeaders: details.requestHeaders });
+  });
+
   staticServer = startStaticServer(8000);
   createWindow();
 
