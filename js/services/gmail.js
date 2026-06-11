@@ -61,10 +61,10 @@ class GmailService {
     if (payload.body?.data) return this._base64Decode(payload.body.data);
     if (payload.parts) {
       for (const part of payload.parts) {
-        if (part.mimeType === 'text/plain' && part.body?.data) return this._base64Decode(part.body.data);
+        if (part.mimeType === 'text/html' && part.body?.data) return this._base64Decode(part.body.data);
       }
       for (const part of payload.parts) {
-        if (part.mimeType === 'text/html' && part.body?.data) return this._base64Decode(part.body.data);
+        if (part.mimeType === 'text/plain' && part.body?.data) return this._base64Decode(part.body.data);
       }
       for (const part of payload.parts) {
         const result = this._decodeBody(part);
