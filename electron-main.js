@@ -122,7 +122,17 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  // Clear Service Workers and Cache Storage on startup to prevent loading stale cached assets
+  try {
+    await session.defaultSession.clearStorageData({
+      storages: ['serviceworkers', 'cachestorage']
+    });
+    console.log('Cleared Service Workers and Cache Storage on startup.');
+  } catch (err) {
+    console.error('Failed to clear storage data:', err);
+  }
+
   staticServer = startStaticServer(8000);
   createWindow();
 

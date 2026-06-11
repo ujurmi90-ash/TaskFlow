@@ -25,13 +25,25 @@
   <div id="toast-root"></div>
   <script type="module" src="js/main.js"></script>
   <script>
-    // Register Service Worker for PWA
+    // Handle Service Worker based on platform
+    const isDesktopApp = window.location.search.includes('platform=desktop');
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(reg => console.log('[PWA] Service Worker registered:', reg.scope))
-          .catch(err => console.warn('[PWA] SW registration failed:', err));
-      });
+      if (isDesktopApp) {
+        // Unregister service workers in desktop mode to avoid caching issues
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          for (let registration of registrations) {
+            registration.unregister();
+            console.log('[PWA] Unregistered service worker in desktop mode');
+          }
+        });
+      } else {
+        // Register Service Worker for PWA
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('[PWA] Service Worker registered:', reg.scope))
+            .catch(err => console.warn('[PWA] SW registration failed:', err));
+        });
+      }
     }
   </script>
 </body>
