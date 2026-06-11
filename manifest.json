@@ -1,0 +1,21 @@
+{
+  "name": "TaskFlow — Gmail Task Tracker",
+  "short_name": "TaskFlow",
+  "description": "Premium Gmail-connected task management with Kanban, daily log, and team tracking.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a1a",
+  "theme_color": "#7c3aed",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "business"],
+  "lang": "en",
+  "scope": "/"
+}

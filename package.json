@@ -1,0 +1,44 @@
+{
+  "name": "taskflow",
+  "version": "1.0.0",
+  "description": "Gmail-connected task management application",
+  "main": "electron-main.js",
+  "scripts": {
+    "start": "powershell -ExecutionPolicy Bypass -File server.ps1",
+    "build:web": "node build.js",
+    "electron:start": "npm run build:web && electron electron-main.js",
+    "electron:build": "npm run build:web && electron-builder --win"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/ios": "^6.0.0",
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.taskflow.app",
+    "productName": "TaskFlow",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "www/**/*",
+      "electron-main.js"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "www/icon-512.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}
