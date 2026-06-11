@@ -113,7 +113,16 @@ class SyncService {
       authService.signOut();
       throw new Error('Session expired');
     }
-    if (!res.ok) throw new Error(`Drive list failed: ${res.status}`);
+    if (!res.ok) {
+      let errorMsg = `Drive list failed: ${res.status}`;
+      try {
+        const errData = await res.json();
+        if (errData?.error?.message) {
+          errorMsg = errData.error.message;
+        }
+      } catch (e) {}
+      throw new Error(errorMsg);
+    }
 
     const data = await res.json();
     return data.files && data.files.length > 0 ? data.files[0].id : null;
@@ -133,7 +142,16 @@ class SyncService {
       authService.signOut();
       throw new Error('Session expired');
     }
-    if (!res.ok) throw new Error(`Drive download failed: ${res.status}`);
+    if (!res.ok) {
+      let errorMsg = `Drive download failed: ${res.status}`;
+      try {
+        const errData = await res.json();
+        if (errData?.error?.message) {
+          errorMsg = errData.error.message;
+        }
+      } catch (e) {}
+      throw new Error(errorMsg);
+    }
 
     return await res.json();
   }
@@ -156,7 +174,16 @@ class SyncService {
         },
         body
       });
-      if (!res.ok) throw new Error(`Drive upload (update) failed: ${res.status}`);
+      if (!res.ok) {
+        let errorMsg = `Drive upload (update) failed: ${res.status}`;
+        try {
+          const errData = await res.json();
+          if (errData?.error?.message) {
+            errorMsg = errData.error.message;
+          }
+        } catch (e) {}
+        throw new Error(errorMsg);
+      }
     } else {
       // Create new file in appDataFolder
       const metadata = {
@@ -174,7 +201,16 @@ class SyncService {
         headers: { Authorization: `Bearer ${token}` },
         body: form
       });
-      if (!res.ok) throw new Error(`Drive upload (create) failed: ${res.status}`);
+      if (!res.ok) {
+        let errorMsg = `Drive upload (create) failed: ${res.status}`;
+        try {
+          const errData = await res.json();
+          if (errData?.error?.message) {
+            errorMsg = errData.error.message;
+          }
+        } catch (e) {}
+        throw new Error(errorMsg);
+      }
     }
   }
 
