@@ -1,7 +1,6 @@
 import { gmailService } from '../services/gmail.js';
 import { authService } from '../services/auth.js';
 import { getInitials, hashColor } from '../config.js';
-
 export class EmailView {
   constructor() {
     this.emails = [];
@@ -9,6 +8,7 @@ export class EmailView {
     this.nextPageToken = null;
     this.query = '';
     this.sortBy = 'date-desc';
+    this.activeTab = 'inbox'; // 'inbox' | 'sent'
   }
 
   render(container) {
@@ -54,6 +54,13 @@ export class EmailView {
             <input type="text" placeholder="Search emails (Gmail syntax supported)..." id="email-search" value="${this.query}"/>
             <button class="btn btn-primary btn-sm" id="email-search-btn">Search</button>
           </div>
+          
+          <!-- Folder Tabs Toggle -->
+          <div class="flex gap-xs" style="background:var(--bg-card); border:1px solid var(--border-color); padding:4px; border-radius:var(--radius-md);">
+            <button class="btn ${this.activeTab === 'inbox' ? 'btn-primary' : 'btn-ghost'} btn-sm" id="email-tab-inbox" style="padding:6px 14px; font-size:var(--text-xs); border:none; ${this.activeTab === 'inbox' ? 'background:var(--accent-gradient);' : ''}">📥 Inbox</button>
+            <button class="btn ${this.activeTab === 'sent' ? 'btn-primary' : 'btn-ghost'} btn-sm" id="email-tab-sent" style="padding:6px 14px; font-size:var(--text-xs); border:none; ${this.activeTab === 'sent' ? 'background:var(--accent-gradient);' : ''}">📤 Sent Mail</button>
+          </div>
+
           <div class="flex items-center gap-xs">
             <span class="text-xs text-muted font-mono">SORT:</span>
             <select class="form-select" id="email-sort-select" style="width:auto; height:38px; font-size:var(--text-xs); border-radius:var(--radius-md); padding-right: 32px;">
@@ -92,17 +99,19 @@ export class EmailView {
   }
 
   _renderEmailCard(e, isImportant) {
-    const fromName = this._extractName(e.from);
+    const isSentFolder = this.activeTab === 'sent';
+    const contactName = isSentFolder ? this._extractName(e.to) : this._extractName(e.from);
+    const contactEmail = isSentFolder ? e.to : e.from;
     const dateStr = this._formatEmailDate(e.date);
     return `
       <div class="email-card" data-email-id="${e.id}">
         <div class="email-important-toggle" data-email-id="${e.id}" style="cursor:pointer; font-size:1.2rem; user-select:none; margin-right:4px; display:flex; align-items:center;" title="${isImportant ? 'Mark Unimportant' : 'Mark Important'}">
           ${isImportant ? '⭐' : '☆'}
         </div>
-        <div class="sender-avatar" style="background:${hashColor(fromName)}">${getInitials(fromName)}</div>
+        <div class="sender-avatar" style="background:${hashColor(contactName)}">${getInitials(contactName)}</div>
         <div class="email-content">
           <div class="email-subject">${this._esc(e.subject || '(no subject)')}</div>
-          <div class="email-from">${this._esc(fromName)}</div>
+          <div class="email-from">${isSentFolder ? 'To: ' : ''}${this._esc(contactName)} <span class="text-muted" style="font-size:0.75rem;">&lt;${this._esc(contactEmail)}&gt;</span></div>
           <div class="email-snippet">${this._esc(e.snippet)}</div>
         </div>
         <div class="email-date">${dateStr}</div>
@@ -132,7 +141,10 @@ export class EmailView {
     this.render(container);
 
     try {
-      const result = await gmailService.fetchMessages(this.query, 15, this.nextPageToken);
+      const activeLabel = this.activeTab === 'inbox' ? 'label:INBOX' : 'label:SENT';
+      const finalQuery = this.query ? `(${this.query}) ${activeLabel}` : activeLabel;
+      
+      const result = await gmailService.fetchMessages(finalQuery, 15, this.nextPageToken);
       this.emails = [...this.emails, ...result.messages];
       this.nextPageToken = result.nextPageToken;
     } catch (err) {
@@ -163,6 +175,23 @@ export class EmailView {
 
     // Load more
     container.querySelector('#load-more-btn')?.addEventListener('click', () => {
+      this._fetchEmails(container);
+    });
+
+    // Tab switching
+    container.querySelector('#email-tab-inbox')?.addEventListener('click', () => {
+      if (this.activeTab === 'inbox') return;
+      this.activeTab = 'inbox';
+      this.emails = [];
+      this.nextPageToken = null;
+      this._fetchEmails(container);
+    });
+
+    container.querySelector('#email-tab-sent')?.addEventListener('click', () => {
+      if (this.activeTab === 'sent') return;
+      this.activeTab = 'sent';
+      this.emails = [];
+      this.nextPageToken = null;
       this._fetchEmails(container);
     });
 
