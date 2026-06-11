@@ -3,6 +3,7 @@ import { gmailService } from '../services/gmail.js';
 export class ReplyModal {
   constructor() {
     this.data = null;
+    this.showingSignatureConfig = false;
   }
 
   init() {
@@ -11,8 +12,12 @@ export class ReplyModal {
 
   _open(data) {
     this.data = data;
+    this.showingSignatureConfig = false;
+    
     const task = data.task || {};
-    const body = task.title ? gmailService.generateTaskUpdateReply(task) : `Hi,\n\nJust following up on this.\n\nBest regards`;
+    const signature = localStorage.getItem('taskflow_email_signature') || '';
+    const baseBody = task.title ? gmailService.generateTaskUpdateReply(task) : `Hi,\n\nJust following up on this.\n\nBest regards`;
+    const body = signature ? `${baseBody}\n\n--\n${signature}` : baseBody;
 
     const root = document.getElementById('modal-root');
     root.innerHTML = `
@@ -33,7 +38,19 @@ export class ReplyModal {
             </div>
             <div class="form-group">
               <label class="form-label">Message</label>
-              <textarea class="form-textarea" id="reply-body" style="min-height:200px">${body}</textarea>
+              <textarea class="form-textarea" id="reply-body" style="min-height:180px">${body}</textarea>
+            </div>
+            
+            <!-- Email Signature Settings -->
+            <div class="form-group" style="margin-top:4px;">
+              <label class="form-label" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" id="edit-signature-toggle">
+                <span>✍️ Email Signature</span>
+                <span id="signature-toggle-icon" style="font-size:0.75rem; color:var(--text-secondary); font-family:var(--font-mono);">Configure ▼</span>
+              </label>
+              <div id="signature-config-container" style="display:none; margin-top:8px; background:var(--bg-card); border:1px solid var(--border-color); padding:var(--space-sm); border-radius:var(--radius-sm); flex-direction:column; gap:8px;">
+                <textarea class="form-textarea" id="signature-input" style="min-height:60px; font-size:var(--text-xs);" placeholder="Regards,\nUmme Jamila\nProject Manager">${this._escAttr(signature)}</textarea>
+                <button class="btn btn-primary btn-sm" id="save-signature-btn" style="width:fit-content; align-self:flex-end; font-size:var(--text-xs); padding:4px 10px; background:var(--accent-gradient); border:none;">Save Signature</button>
+              </div>
             </div>
           </div>
           <div class="modal-footer">
@@ -54,6 +71,34 @@ export class ReplyModal {
     root.querySelector('#reply-cancel')?.addEventListener('click', () => this._close());
     root.querySelector('#reply-modal-overlay')?.addEventListener('click', (e) => {
       if (e.target.id === 'reply-modal-overlay') this._close();
+    });
+
+    // Toggle signature configuration container
+    const signatureToggle = root.querySelector('#edit-signature-toggle');
+    const signatureConfig = root.querySelector('#signature-config-container');
+    const signatureToggleIcon = root.querySelector('#signature-toggle-icon');
+    
+    signatureToggle?.addEventListener('click', () => {
+      this.showingSignatureConfig = !this.showingSignatureConfig;
+      if (this.showingSignatureConfig) {
+        signatureConfig.style.display = 'flex';
+        signatureToggleIcon.textContent = 'Hide ▲';
+      } else {
+        signatureConfig.style.display = 'none';
+        signatureToggleIcon.textContent = 'Configure ▼';
+      }
+    });
+
+    // Save signature
+    root.querySelector('#save-signature-btn')?.addEventListener('click', () => {
+      const signatureVal = root.querySelector('#signature-input').value;
+      localStorage.setItem('taskflow_email_signature', signatureVal);
+      EventBus.emit('toast:show', { type: 'success', message: 'Signature saved! Will apply to future replies.' });
+      
+      // Close signature edit block
+      this.showingSignatureConfig = false;
+      signatureConfig.style.display = 'none';
+      signatureToggleIcon.textContent = 'Configure ▼';
     });
 
     root.querySelector('#reply-send')?.addEventListener('click', async () => {
