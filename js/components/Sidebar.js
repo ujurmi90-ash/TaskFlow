@@ -17,6 +17,7 @@ export class Sidebar {
       { id: 'kanban', icon: '📋', label: 'Kanban Board' },
       { id: 'byperson', icon: '👥', label: 'By Person' },
       { id: 'emails', icon: '📧', label: 'Emails' },
+      { id: 'taskdetails', icon: '🔍', label: 'Task Details' },
     ];
 
     const syncLabel = syncStatus === 'syncing' ? 'Syncing…' :

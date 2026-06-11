@@ -7,6 +7,7 @@ import { DailyLog } from './DailyLog.js';
 import { KanbanBoard } from './KanbanBoard.js';
 import { ByPerson } from './ByPerson.js';
 import { EmailView } from './EmailView.js';
+import { TaskDetails } from './TaskDetails.js';
 import { TaskModal } from './TaskModal.js';
 import { ReplyModal } from './ReplyModal.js';
 import { ImportModal } from './ImportModal.js';
@@ -24,6 +25,7 @@ export class App {
       kanban: new KanbanBoard(),
       byperson: new ByPerson(),
       emails: new EmailView(),
+      taskdetails: new TaskDetails(),
     };
 
     // Init modals
@@ -80,6 +82,7 @@ export class App {
       kanban: 'Kanban Board',
       byperson: 'By Person',
       emails: 'Emails',
+      taskdetails: 'Task Details',
     };
 
     this.container.innerHTML = `
@@ -135,6 +138,7 @@ export class App {
       kanban: 'Kanban Board',
       byperson: 'By Person',
       emails: 'Emails',
+      taskdetails: 'Task Details',
     };
     const header = this.container.querySelector('.header-title');
     if (header) header.textContent = viewTitles[AppState.currentView] || 'Dashboard';
