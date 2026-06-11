@@ -51,9 +51,8 @@ export class EmailDetailModal {
               </h3>
             </div>
 
-            <!-- Sandboxed Iframe for body content -->
             <div style="flex:1; display:flex; min-height:300px; border:1px solid var(--border-color); border-radius:var(--radius-md); overflow:hidden;">
-              <iframe id="email-body-iframe" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" style="width:100%; height:100%; border:none; background:#ffffff;"></iframe>
+              <iframe id="email-body-iframe" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" style="width:100%; height:100%; border:none; background:#12122a;"></iframe>
             </div>
           </div>
           
@@ -85,7 +84,33 @@ export class EmailDetailModal {
 
       let contentToInject = '';
       if (isHtml) {
-        contentToInject = bodyContent;
+        const themeStyles = `
+          <style>
+            /* Force TaskFlow Dark Theme inside Email Iframe */
+            body, html {
+              background-color: #12122a !important;
+              color: #f0f0f5 !important;
+              font-family: 'Roboto Condensed', 'Inter', -apple-system, sans-serif !important;
+            }
+            body *, html * {
+              color: #f0f0f5 !important;
+            }
+            body table, body tr, body td, body div, body tbody, body p, body span, body section, body header, body ul, body li {
+              background-color: #12122a !important;
+              border-color: rgba(255, 255, 255, 0.08) !important;
+            }
+            a {
+              color: #06b6d4 !important;
+              text-decoration: underline !important;
+            }
+            /* Custom styled scrollbars inside iframe */
+            ::-webkit-scrollbar { width: 6px; height: 6px; }
+            ::-webkit-scrollbar-track { background: transparent; }
+            ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+            ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+          </style>
+        `;
+        contentToInject = themeStyles + bodyContent;
       } else {
         contentToInject = `
           <!DOCTYPE html>
@@ -94,15 +119,22 @@ export class EmailDetailModal {
             <meta charset="utf-8">
             <style>
               body {
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                font-family: 'Roboto Condensed', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
                 font-size: 14px;
                 line-height: 1.6;
-                color: #2c3e50;
+                color: #f0f0f5;
                 margin: 20px;
                 white-space: pre-wrap;
                 word-break: break-word;
-                background-color: #ffffff;
+                background-color: #12122a;
               }
+              a {
+                color: #06b6d4;
+              }
+              ::-webkit-scrollbar { width: 6px; height: 6px; }
+              ::-webkit-scrollbar-track { background: transparent; }
+              ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+              ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
             </style>
           </head>
           <body>${this._esc(bodyContent)}</body>
