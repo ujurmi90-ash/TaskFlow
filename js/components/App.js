@@ -8,6 +8,7 @@ import { KanbanBoard } from './KanbanBoard.js';
 import { ByPerson } from './ByPerson.js';
 import { EmailView } from './EmailView.js';
 import { TaskDetails } from './TaskDetails.js';
+import { MyTasks } from './MyTasks.js';
 import { TaskModal } from './TaskModal.js';
 import { ReplyModal } from './ReplyModal.js';
 import { ImportModal } from './ImportModal.js';
@@ -26,6 +27,7 @@ export class App {
       byperson: new ByPerson(),
       emails: new EmailView(),
       taskdetails: new TaskDetails(),
+      mytasks: new MyTasks(),
     };
 
     // Init modals
@@ -83,6 +85,7 @@ export class App {
       byperson: 'By Person',
       emails: 'Emails',
       taskdetails: 'Task Details',
+      mytasks: 'My Tasks',
     };
 
     this.container.innerHTML = `
@@ -139,6 +142,7 @@ export class App {
       byperson: 'By Person',
       emails: 'Emails',
       taskdetails: 'Task Details',
+      mytasks: 'My Tasks',
     };
     const header = this.container.querySelector('.header-title');
     if (header) header.textContent = viewTitles[AppState.currentView] || 'Dashboard';

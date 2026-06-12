@@ -86,6 +86,28 @@ class GmailService {
     }
   }
 
+  async sendEmail(to, subject, body) {
+    const email = [
+      `To: ${to}`,
+      `Subject: ${subject}`,
+      'Content-Type: text/plain; charset=utf-8',
+      '',
+      body
+    ].join('\r\n');
+
+    const encodedEmail = btoa(unescape(encodeURIComponent(email)))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+    const url = `https://gmail.googleapis.com/gmail/v1/users/me/messages/send`;
+    const res = await this._fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ raw: encodedEmail })
+    });
+
+    return await res.json();
+  }
+
   async sendReply(threadId, to, subject, body) {
     const replySubject = subject.startsWith('Re:') ? subject : `Re: ${subject}`;
     const email = [

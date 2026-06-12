@@ -114,9 +114,13 @@ export class TaskModal {
             <div class="form-group">
               <label class="form-label">Owner(s)</label>
               <div class="owner-chips" id="owner-chips">
-                ${(AppState.teamMembers || []).map(m => `
-                  <span class="owner-chip ${this.selectedOwners.includes(m) ? 'selected' : ''}" data-owner="${m}">${m}</span>
-                `).join('')}
+                ${(AppState.teamMembers || []).map(m => {
+                  const name = typeof m === 'object' && m !== null ? m.name : m;
+                  const isSelected = this.selectedOwners.includes(name);
+                  return `
+                    <span class="owner-chip ${isSelected ? 'selected' : ''}" data-owner="${this._escAttr(name)}">${this._escAttr(name)}</span>
+                  `;
+                }).join('')}
               </div>
             </div>
 
@@ -245,11 +249,28 @@ export class TaskModal {
       }
 
       try {
+        const previousOwners = this.isEdit ? (this.task.owners || []) : [];
+        const newOwners = [...this.selectedOwners];
+
         if (this.isEdit) {
           await db.updateTask(this.task.id, data);
         } else {
           await db.addTask({ ...data, id: generateId() });
         }
+
+        // Detect newly assigned owners and trigger notifications in the background
+        const newlyAssigned = newOwners.filter(o => !previousOwners.includes(o));
+        newlyAssigned.forEach(name => {
+          const member = (AppState.teamMembers || []).find(m => {
+            const mName = typeof m === 'object' && m !== null ? m.name : m;
+            return mName === name;
+          });
+          const email = member && typeof member === 'object' ? member.email : '';
+          if (email && email.trim()) {
+            this._sendNotification(email, name, data);
+          }
+        });
+
         const tasks = await db.getAllTasks();
         AppState.tasks = tasks;
         EventBus.emit('tasks:updated');
@@ -305,4 +326,19 @@ export class TaskModal {
   }
 
   _escAttr(str) { return (str || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+  _escHtml(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
+
+  async _sendNotification(email, name, task) {
+    const subject = `[TaskFlow] Task Assigned: ${task.title}`;
+    const dateStr = task.endDate ? ` (Due: ${task.endDate})` : '';
+    const body = `Hi ${name},\n\nYou have been assigned the following task in TaskFlow${dateStr}:\n\nTask: ${task.title}\nProject: ${task.project || 'N/A'}\nPriority: ${task.priority || 'Medium'}\nStatus: ${task.status || 'To Do'}\nNotes: ${task.notes || 'No notes.'}\n\nView details: ${window.location.origin}\n\nBest regards,\n${AppState.user?.name || 'TaskFlow'}`;
+    
+    try {
+      const { gmailService } = await import('../services/gmail.js');
+      await gmailService.sendEmail(email, subject, body);
+      console.log(`[Notification] Sent to ${name} <${email}>`);
+    } catch (err) {
+      console.error('[Notification] Failed for ' + name, err);
+    }
+  }
 }

@@ -13,6 +13,7 @@ export class Sidebar {
     const syncStatus = AppState.syncStatus || 'idle';
     const navItems = [
       { id: 'dashboard', icon: '📊', label: 'Dashboard' },
+      { id: 'mytasks', icon: '👤', label: 'My Tasks' },
       { id: 'dailylog', icon: '📅', label: 'Daily Log' },
       { id: 'kanban', icon: '📋', label: 'Kanban Board' },
       { id: 'byperson', icon: '👥', label: 'By Person' },
