@@ -22,25 +22,46 @@ export class MyTasks {
 
     if (!myName) {
       container.innerHTML = `
-        <div class="empty-state animate-fadeIn" style="margin:var(--space-xl) auto; max-width:560px;">
-          <div class="empty-icon">👤</div>
+        <div class="empty-state animate-fadeIn" style="margin:var(--space-xl) auto; max-width:600px;">
+          <div class="empty-icon" style="margin-bottom:var(--space-xs);">👤</div>
           <div class="empty-title">Workspace Profile Setup Required</div>
           <div class="empty-desc" style="margin-bottom:var(--space-md);">
             You are signed in as <strong style="color:var(--text-primary);">${this._esc(user.name || 'Unknown User')}</strong> (${this._esc(user.email || '')}). 
-            However, your profile is not registered in the team directory yet.
+            However, your profile is not linked in the team directory yet.
           </div>
-          <div style="background:var(--bg-card); border:1px solid var(--border-color); padding:var(--space-md); border-radius:var(--radius-md); text-align:left; font-size:var(--text-sm); line-height:1.5;">
-            <p><strong>To view your personal dashboard:</strong></p>
-            <ol style="margin-left:20px; margin-top:8px;">
-              <li>Go to the <strong>Task Details</strong> workspace or click the <strong>Manage Team</strong> button in the sidebar.</li>
-              <li>Add your name: <strong style="color:var(--accent-secondary);">${this._esc(user.name || 'Name')}</strong> and email address: <strong style="color:var(--accent-secondary);">${this._esc(user.email || 'email')}</strong> to the directory.</li>
-              <li>Once added, this dashboard will automatically display all tasks assigned to you.</li>
-            </ol>
+          
+          <div style="background:var(--bg-card); border:1px solid var(--border-color); padding:var(--space-md); border-radius:var(--radius-md); text-align:left; font-size:var(--text-sm); line-height:1.5; margin-bottom:var(--space-md);">
+            <p style="font-weight:700; margin-bottom:var(--space-sm); color:var(--text-primary);">Are you one of the team members below? Click to link your account:</p>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:var(--space-xs); margin-bottom:var(--space-md);">
+              ${(AppState.teamMembers || []).map(m => {
+                const name = typeof m === 'object' && m !== null ? m.name : m;
+                const email = typeof m === 'object' && m !== null ? m.email : '';
+                const role = typeof m === 'object' && m !== null ? m.role : '';
+                return `
+                  <button class="btn btn-ghost btn-sm link-member-profile-btn" data-member-name="${this._escAttr(name)}" style="background:var(--bg-glass); border:1px solid var(--border-color); display:flex; flex-direction:column; align-items:flex-start; text-align:left; padding:8px 12px; gap:2px; height:auto; width:100%; border-radius:var(--radius-md);">
+                    <span style="font-weight:600; color:var(--text-primary); font-size:var(--text-sm);">${this._esc(name)}</span>
+                    <span style="font-size:10px; color:var(--text-muted);">${this._esc(role || 'Team Member')}</span>
+                    ${email ? `
+                      <span style="font-size:10px; color:var(--accent-primary); font-family:var(--font-mono);">${this._esc(email)}</span>
+                    ` : `
+                      <span style="font-size:10px; color:var(--warning); font-style:italic;">No email configured</span>
+                    `}
+                  </button>
+                `;
+              }).join('')}
+            </div>
+            
+            <p style="font-weight:700; margin-bottom:var(--space-xs); color:var(--text-primary);">Or create a new profile with your signed-in name:</p>
+            <div class="flex gap-sm">
+              <input class="form-input" id="new-member-profile-name" value="${this._escAttr(user.name || '')}" placeholder="Your display name..." style="flex:1;" />
+              <button class="btn btn-primary" id="btn-create-new-profile" style="background:var(--accent-gradient); border:none; white-space:nowrap; padding:0 var(--space-md);">Create & Link</button>
+            </div>
           </div>
-          <button class="btn btn-primary mt-lg" id="btn-configure-team-profile" style="background:var(--accent-gradient); border:none;">👥 Manage Team Directory</button>
+
+          <button class="btn btn-ghost" id="btn-configure-team-profile">👥 Manage Team Directory</button>
         </div>
       `;
-      this._bindSetupEvents(container);
+      this._bindSetupEvents(container, user);
       return;
     }
 
@@ -224,11 +245,76 @@ export class MyTasks {
     `;
   }
 
-  _bindSetupEvents(container) {
+  _bindSetupEvents(container, user) {
     container.querySelector('#btn-configure-team-profile')?.addEventListener('click', () => {
       EventBus.emit('team:manage');
     });
+
+    // Link profile button click handler
+    container.querySelectorAll('.link-member-profile-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const name = btn.dataset.memberName;
+        const email = user.email || '';
+        if (!name || !email) return;
+
+        try {
+          const members = (AppState.teamMembers || []).map(m => {
+            const mName = typeof m === 'object' && m !== null ? m.name : m;
+            const mEmail = typeof m === 'object' && m !== null ? m.email : '';
+            const mRole = typeof m === 'object' && m !== null ? m.role : '';
+            if (mName.toLowerCase() === name.toLowerCase()) {
+              return { name: mName, email: email, role: mRole };
+            }
+            return typeof m === 'object' ? m : { name: mName, email: mEmail, role: mRole };
+          });
+
+          await db.saveTeamMembers(members);
+          AppState.teamMembers = members;
+          EventBus.emit('team:updated');
+          EventBus.emit('tasks:updated');
+          EventBus.emit('toast:show', { type: 'success', message: `Linked your account to ${name}!` });
+        } catch (err) {
+          EventBus.emit('toast:show', { type: 'error', message: 'Failed to link: ' + err.message });
+        }
+      });
+    });
+
+    // Create & link new profile
+    container.querySelector('#btn-create-new-profile')?.addEventListener('click', async () => {
+      const nameInput = container.querySelector('#new-member-profile-name');
+      const name = nameInput?.value.trim();
+      const email = user.email || '';
+      
+      if (!name) {
+        EventBus.emit('toast:show', { type: 'error', message: 'Name is required' });
+        return;
+      }
+
+      try {
+        const members = (AppState.teamMembers || []).map(m => {
+          if (typeof m === 'object' && m !== null) return { ...m };
+          return { name: m, email: '', role: '' };
+        });
+
+        if (members.some(m => m.name.toLowerCase() === name.toLowerCase())) {
+          EventBus.emit('toast:show', { type: 'info', message: 'A profile with that name already exists. Please click it in the list above to link.' });
+          return;
+        }
+
+        members.push({ name, email, role: 'Team Member' });
+
+        await db.saveTeamMembers(members);
+        AppState.teamMembers = members;
+        EventBus.emit('team:updated');
+        EventBus.emit('tasks:updated');
+        EventBus.emit('toast:show', { type: 'success', message: `Created and linked profile for ${name}!` });
+      } catch (err) {
+        EventBus.emit('toast:show', { type: 'error', message: 'Failed to create: ' + err.message });
+      }
+    });
   }
+
+  _escAttr(str) { return (str || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 
   _bindDashboardEvents(container) {
     // Collapsible header toggler

@@ -98,7 +98,10 @@ export class TaskDetails {
               
               <select class="form-select" id="filter-owner" title="Filter by Owner">
                 <option value="">All Owners</option>
-                ${teamMembers.map(m => `<option value="${m}" ${this.filters.owner === m ? 'selected' : ''}>${m}</option>`).join('')}
+                ${teamMembers.map(m => {
+                  const name = typeof m === 'object' && m !== null ? m.name : m;
+                  return `<option value="${name}" ${this.filters.owner === name ? 'selected' : ''}>${name}</option>`;
+                }).join('')}
               </select>
             </div>
 

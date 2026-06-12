@@ -89,7 +89,11 @@ export class Dashboard {
 
   _renderWorkload(tasks) {
     const ownerCounts = {};
-    CONFIG.TEAM_MEMBERS.forEach(m => ownerCounts[m] = 0);
+    const teamMembers = AppState.teamMembers || CONFIG.TEAM_MEMBERS;
+    teamMembers.forEach(m => {
+      const name = typeof m === 'object' && m !== null ? m.name : m;
+      ownerCounts[name] = 0;
+    });
     tasks.forEach(t => (t.owners || []).forEach(o => { if (ownerCounts[o] !== undefined) ownerCounts[o]++; }));
     const max = Math.max(...Object.values(ownerCounts), 1);
     const sorted = Object.entries(ownerCounts).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);

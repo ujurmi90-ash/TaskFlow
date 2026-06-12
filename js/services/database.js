@@ -237,12 +237,30 @@ class Database {
     try {
       const store = this._tx('customData');
       const data = await this._request(store, 'get', 'teamMembers');
-      if (data && data.values) return data.values;
+      let members = [];
+      if (data && data.values) {
+        members = data.values;
+      } else {
+        const { CONFIG } = await import('../config.js');
+        members = [...CONFIG.TEAM_MEMBERS];
+      }
+      const { CONFIG } = await import('../config.js');
+      return members.map(m => {
+        const name = typeof m === 'object' && m !== null ? m.name : m;
+        const defaultMember = CONFIG.TEAM_MEMBERS.find(dm => dm.name.toLowerCase() === name.toLowerCase());
+        if (defaultMember) {
+          return {
+            name: defaultMember.name,
+            email: (typeof m === 'object' && m.email) || defaultMember.email || '',
+            role: (typeof m === 'object' && m.role) || defaultMember.role || ''
+          };
+        }
+        return typeof m === 'object' ? m : { name, email: '', role: '' };
+      });
     } catch (e) {
-      // ignore
+      const { CONFIG } = await import('../config.js');
+      return [...CONFIG.TEAM_MEMBERS];
     }
-    const { CONFIG } = await import('../config.js');
-    return [...CONFIG.TEAM_MEMBERS];
   }
 
   async saveTeamMembers(members) {

@@ -2,7 +2,7 @@ import { CONFIG, getStatusColor, getInitials, hashColor } from '../config.js';
 
 export class ByPerson {
   constructor() {
-    this.expanded = new Set(CONFIG.TEAM_MEMBERS.slice(0, 3));
+    this.expanded = new Set(CONFIG.TEAM_MEMBERS.slice(0, 3).map(m => typeof m === 'object' && m !== null ? m.name : m));
   }
 
   render(container) {
@@ -22,7 +22,7 @@ export class ByPerson {
 
   _groupByPerson(tasks) {
     const map = new Map();
-    AppState.teamMembers.forEach(m => map.set(m, []));
+    AppState.teamMembers.forEach(m => map.set(typeof m === 'object' && m !== null ? m.name : m, []));
     map.set('Unassigned', []);
 
     tasks.forEach(t => {

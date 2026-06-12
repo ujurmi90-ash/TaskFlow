@@ -7,12 +7,12 @@ export class TeamModal {
 
   init() {
     EventBus.on('team:manage', async () => {
-      // Normalize members list to always consist of { name, email } objects
+      // Normalize members list to consist of { name, email, role } objects
       this.members = (AppState.teamMembers || []).map(m => {
         if (typeof m === 'object' && m !== null) {
-          return { name: m.name || '', email: m.email || '' };
+          return { name: m.name || '', email: m.email || '', role: m.role || '' };
         }
-        return { name: m || '', email: '' };
+        return { name: m || '', email: '', role: '' };
       });
       this._render();
     });
@@ -33,9 +33,15 @@ export class TeamModal {
                 <label class="form-label">Name</label>
                 <input class="form-input" id="new-member-input" placeholder="Member name (e.g. Rukhsat)..." />
               </div>
-              <div class="form-group" style="margin-top:4px;">
-                <label class="form-label">Email</label>
-                <input class="form-input" id="new-member-email-input" placeholder="Member email (e.g. name@email.com)..." />
+              <div class="form-row" style="margin-top:4px; gap:var(--space-xs);">
+                <div class="form-group" style="flex:1;">
+                  <label class="form-label">Email</label>
+                  <input class="form-input" id="new-member-email-input" placeholder="e.g. name@email.com..." />
+                </div>
+                <div class="form-group" style="flex:1;">
+                  <label class="form-label">Role</label>
+                  <input class="form-input" id="new-member-role-input" placeholder="e.g. Designer..." />
+                </div>
               </div>
               <button class="btn btn-primary mt-sm" id="add-member-btn" style="background:var(--accent-gradient); border:none; width:100%;">+ Add Member</button>
             </div>
@@ -44,11 +50,18 @@ export class TeamModal {
               ${this.members.map((m, idx) => `
                 <div class="flex-between p-sm" style="background:var(--bg-glass); border-radius:var(--radius-sm); border:1px solid var(--border-color);">
                   <div class="flex-col" style="min-width: 0; flex: 1; margin-right: var(--space-sm);">
-                    <span class="font-medium truncate">${this._esc(m.name)}</span>
+                    <div style="display:flex; align-items:center; gap:var(--space-xs); flex-wrap:wrap;">
+                      <span class="font-medium" style="color:var(--text-primary); font-weight:600;">${this._esc(m.name)}</span>
+                      ${m.role ? `
+                        <span class="badge" style="background:rgba(255,255,255,0.06); border:1px solid var(--border-color); font-size:9px; color:var(--text-secondary); padding:1px 6px; border-radius:var(--radius-sm); font-weight:500;">
+                          ${this._esc(m.role)}
+                        </span>
+                      ` : ''}
+                    </div>
                     ${m.email ? `
-                      <span class="text-xs text-muted truncate" style="font-family:var(--font-mono);">${this._esc(m.email)}</span>
+                      <span class="text-xs text-muted truncate" style="font-family:var(--font-mono); margin-top:2px;">${this._esc(m.email)}</span>
                     ` : `
-                      <span class="text-xs text-muted" style="font-style:italic; opacity:0.5;">No email configured</span>
+                      <span class="text-xs text-muted" style="font-style:italic; opacity:0.5; margin-top:2px;">No email configured</span>
                     `}
                   </div>
                   <button class="btn-icon btn-ghost sm remove-member-btn" data-index="${idx}" title="Remove">✕</button>
@@ -83,10 +96,12 @@ export class TeamModal {
     const addBtn = root.querySelector('#add-member-btn');
     const input = root.querySelector('#new-member-input');
     const emailInput = root.querySelector('#new-member-email-input');
+    const roleInput = root.querySelector('#new-member-role-input');
     
     const addMember = () => {
       const name = input.value.trim();
       const email = emailInput.value.trim();
+      const role = roleInput.value.trim();
       
       if (!name) {
         EventBus.emit('toast:show', { type: 'error', message: 'Name is required' });
@@ -98,7 +113,7 @@ export class TeamModal {
         return;
       }
 
-      this.members.push({ name, email });
+      this.members.push({ name, email, role });
       this._render();
       
       // Focus name input again for fast additions
@@ -106,11 +121,14 @@ export class TeamModal {
     };
     
     addBtn?.addEventListener('click', addMember);
-    // Allow enter key triggers on both fields
+    // Allow enter key triggers on all fields
     input?.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') emailInput.focus();
     });
     emailInput?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') roleInput.focus();
+    });
+    roleInput?.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') addMember();
     });
 

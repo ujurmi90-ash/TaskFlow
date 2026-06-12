@@ -6,7 +6,16 @@ export const CONFIG = {
   STATUSES: ['To Do', 'In Progress', 'Waiting', 'Approved', 'Blocked', 'Completed'],
   PRIORITIES: ['Today', 'High', 'Medium', 'Low'],
   TASK_TYPES: ['Design', 'Development', 'Marketing', 'Content', 'Video', 'Reels', 'CRM', 'Newsletter', 'Project Mgt', 'Social Media', 'Follow Up'],
-  TEAM_MEMBERS: ['Ziya', 'Jacky', 'Ashik', 'Yousuf', 'Rukon', 'Rukhsat', 'Urmi', 'Jack'],
+  TEAM_MEMBERS: [
+    { name: 'Urmi', email: 'management@brandnookcoworking.com', role: 'Project Manager, Team Leader' },
+    { name: 'Ashik', email: 'design2@brandnookcoworking.com', role: 'Designer (2D, Motion, Video, AI, Map, Social Post)' },
+    { name: 'Jacky', email: 'design@brandnookcoworking.com', role: 'Designer (Branding, 2D, Logo, Flyer, Newsletter, Social Post)' },
+    { name: 'Rukhsat', email: 'support@brandnookcoworking.com', role: 'Digital Content Creator & Social, Marketing Team Coordinator' },
+    { name: 'Rukon', email: 'web@brandnookcoworking.com', role: 'Senior Developer' },
+    { name: 'Ziya', email: 'web2@brandnookcoworking.com', role: 'Junior Developer' },
+    { name: 'Shariar', email: 'social@brandnookcoworking.com', role: 'Social Media Manager' },
+    { name: 'Marketing', email: 'marketing@brandnookcoworking.com', role: 'Digital Marketer & Analyst' }
+  ],
   DEFAULT_PROJECTS: ['CR', 'Allies', 'Brandnook', 'CREwithMe', 'CRM'],
   DEFAULT_SUB_CATEGORIES: ['Website', 'Social Media', 'Design and Development'],
 

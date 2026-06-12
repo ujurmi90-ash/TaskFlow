@@ -70,7 +70,10 @@ export class DailyLog {
         </select>
         <select class="form-select" id="filter-owner">
           <option value="">All Owners</option>
-          ${(AppState.teamMembers || []).map(m => `<option value="${m}" ${f.owner === m ? 'selected' : ''}>${m}</option>`).join('')}
+          ${(AppState.teamMembers || []).map(m => {
+            const name = typeof m === 'object' && m !== null ? m.name : m;
+            return `<option value="${name}" ${f.owner === name ? 'selected' : ''}>${name}</option>`;
+          }).join('')}
         </select>
         <select class="form-select" id="filter-project">
           <option value="">All Projects</option>
