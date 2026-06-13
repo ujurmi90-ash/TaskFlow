@@ -41,6 +41,30 @@ class GmailService {
     return data.labels || [];
   }
 
+  async fetchLabel(id) {
+    const url = `https://gmail.googleapis.com/gmail/v1/users/me/labels/${id}`;
+    const res = await this._fetch(url);
+    return await res.json();
+  }
+
+  async fetchLabelsWithStats() {
+    const labels = await this.fetchLabels();
+    const systemIds = ['INBOX', 'SENT', 'STARRED', 'IMPORTANT'];
+    const filtered = labels.filter(l => systemIds.includes(l.id) || l.type === 'user');
+
+    const detailedLabels = await Promise.all(
+      filtered.map(async (l) => {
+        try {
+          return await this.fetchLabel(l.id);
+        } catch (err) {
+          console.warn(`Failed to fetch label details for ${l.id}:`, err);
+          return l;
+        }
+      })
+    );
+    return detailedLabels;
+  }
+
   async fetchMessage(id) {
     const url = `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=full`;
     const res = await this._fetch(url);

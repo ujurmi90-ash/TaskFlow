@@ -79,6 +79,11 @@ export class EmailView {
                 else if (l.id === 'IMPORTANT') displayName = '🏷️ Important';
                 else displayName = `📁 ${displayName}`;
 
+                const unreadCount = l.threadsUnread || l.messagesUnread || 0;
+                if (unreadCount > 0) {
+                  displayName = `${displayName} (${unreadCount})`;
+                }
+
                 return `<option value="${l.id}" ${isSelected ? 'selected' : ''}>${this._esc(displayName)}</option>`;
               }).join('')}
               ${this.labels.length === 0 ? `
@@ -175,7 +180,7 @@ export class EmailView {
     this.loadingLabels = true;
 
     try {
-      const rawLabels = await gmailService.fetchLabels();
+      const rawLabels = await gmailService.fetchLabelsWithStats();
       const systemIds = ['INBOX', 'SENT', 'STARRED', 'IMPORTANT'];
       const filtered = rawLabels.filter(l => {
         if (systemIds.includes(l.id)) return true;
@@ -325,6 +330,35 @@ export class EmailView {
               card.classList.add('read');
               const dot = card.querySelector('.unread-dot');
               if (dot) dot.remove();
+
+              // Update the folder option unread count in the UI select element
+              const updateOptionUnread = (labelId) => {
+                const labelObj = this.labels.find(l => l.id === labelId);
+                if (labelObj) {
+                  if (labelObj.threadsUnread > 0) labelObj.threadsUnread--;
+                  else if (labelObj.messagesUnread > 0) labelObj.messagesUnread--;
+
+                  const optionEl = container.querySelector(`#email-folder-select option[value="${labelId}"]`);
+                  if (optionEl) {
+                    let displayName = labelObj.name;
+                    if (labelObj.id === 'INBOX') displayName = '📥 Inbox';
+                    else if (labelObj.id === 'SENT') displayName = '📤 Sent Mail';
+                    else if (labelObj.id === 'STARRED') displayName = '⭐ Starred';
+                    else if (labelObj.id === 'IMPORTANT') displayName = '🏷️ Important';
+                    else displayName = `📁 ${displayName}`;
+
+                    const count = labelObj.threadsUnread || labelObj.messagesUnread || 0;
+                    if (count > 0) {
+                      displayName = `${displayName} (${count})`;
+                    }
+                    optionEl.textContent = displayName;
+                  }
+                }
+              };
+              updateOptionUnread(this.activeLabelId);
+              if (this.activeLabelId !== 'INBOX' && (email.labelIds || []).includes('INBOX')) {
+                updateOptionUnread('INBOX');
+              }
             } catch (err) {
               console.warn('[Gmail] Failed to mark email as read:', err);
             }
