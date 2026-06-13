@@ -253,9 +253,32 @@ class SyncService {
   }
 
   _mergeTeamMembers(localMembers, remoteMembers) {
-    // Union of both arrays, preserving unique names
-    const memberSet = new Set([...localMembers, ...remoteMembers]);
-    return Array.from(memberSet);
+    const memberMap = new Map();
+
+    const addMember = (m) => {
+      if (!m) return;
+      const name = typeof m === 'object' ? m.name : m;
+      if (!name) return;
+      const key = name.trim().toLowerCase();
+
+      const existing = memberMap.get(key);
+      if (!existing) {
+        memberMap.set(key, m);
+      } else if (typeof m === 'object' && typeof existing !== 'object') {
+        memberMap.set(key, m);
+      } else if (typeof m === 'object' && typeof existing === 'object') {
+        memberMap.set(key, {
+          name: existing.name || m.name,
+          email: existing.email || m.email,
+          role: existing.role || m.role
+        });
+      }
+    };
+
+    (localMembers || []).forEach(addMember);
+    (remoteMembers || []).forEach(addMember);
+
+    return Array.from(memberMap.values());
   }
 
   // ---- Internal: Write merged state to local IndexedDB ----

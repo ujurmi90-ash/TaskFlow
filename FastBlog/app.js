@@ -48,7 +48,8 @@ class FastBlogApp {
                 openai: "",
                 anthropic: "",
                 perplexity: ""
-            }
+            },
+            libraryFilter: "all"
         };
 
         this.dom = {};
@@ -75,6 +76,7 @@ class FastBlogApp {
 
         this.dom.sidebar = document.getElementById("ai-sidebar");
         this.dom.expandSidebarBtn = document.getElementById("expand-sidebar-btn");
+        this.dom.sidebarHeightToggle = document.getElementById("sidebar-height-toggle");
         this.dom.workspaceContainer = document.querySelector(".workspace-grid-container");
 
         // Metrics
@@ -349,6 +351,21 @@ class FastBlogApp {
             this.state.activeBlogId[b] = localStorage.getItem(`fastblog_active_id_${b}`);
         });
 
+        // Restore sidebar width/height preferences
+        const savedWide = localStorage.getItem("fastblog_sidebar_wide") === "true";
+        if (savedWide && this.dom.workspaceContainer) {
+            this.dom.workspaceContainer.classList.add("sidebar-wide");
+            const btn = document.getElementById("sidebar-size-toggle");
+            if (btn) btn.textContent = "↔ Narrow";
+        }
+
+        const savedFullHeight = localStorage.getItem("fastblog_sidebar_full_height") === "true";
+        if (savedFullHeight && this.dom.workspaceContainer) {
+            this.dom.workspaceContainer.classList.add("sidebar-full-height");
+            const btn = document.getElementById("sidebar-height-toggle");
+            if (btn) btn.textContent = "↕ Scroll View";
+        }
+
         // Trigger load
         this.loadBrandWorkspace();
     }
@@ -359,10 +376,35 @@ class FastBlogApp {
         if (!listContainer) return;
 
         listContainer.innerHTML = "";
-        const blogList = this.state.blogs[brand];
+        let blogList = this.state.blogs[brand] || [];
+
+        // Synchronize tab styles
+        const filter = this.state.libraryFilter || "all";
+        const allTab = document.getElementById("filter-all");
+        const approvedTab = document.getElementById("filter-approved");
+        if (allTab && approvedTab) {
+            if (filter === "all") {
+                allTab.classList.add("active");
+                approvedTab.classList.remove("active");
+            } else {
+                allTab.classList.remove("active");
+                approvedTab.classList.add("active");
+            }
+        }
+
+        // Calculate and display count of approved blogs
+        const approvedCount = blogList.filter(b => b.workflowState === "approved").length;
+        if (approvedTab) {
+            approvedTab.textContent = `Approved (${approvedCount})`;
+        }
+
+        // Apply filters
+        if (filter === "approved") {
+            blogList = blogList.filter(b => b.workflowState === "approved");
+        }
 
         if (blogList.length === 0) {
-            listContainer.innerHTML = `<div class="timeline-empty">No drafts created yet</div>`;
+            listContainer.innerHTML = `<div class="timeline-empty">No ${filter === "approved" ? "approved " : ""}drafts found</div>`;
             return;
         }
 
@@ -400,6 +442,11 @@ class FastBlogApp {
         });
     }
 
+    setLibraryFilter(filter) {
+        this.state.libraryFilter = filter || "all";
+        this.renderLibraryList();
+    }
+
     /* COLLAPSIBLE SIDEBARS & BOARDS */
     toggleSidebar() {
         this.state.sidebarCollapsed = !this.state.sidebarCollapsed;
@@ -413,6 +460,28 @@ class FastBlogApp {
             this.dom.expandSidebarBtn.classList.add("hidden");
             this.dom.workspaceContainer.classList.remove("sidebar-collapsed");
         }
+    }
+
+    toggleSidebarWidth() {
+        const btn = document.getElementById("sidebar-size-toggle");
+        const container = this.dom.workspaceContainer;
+        if (!container || !btn) return;
+
+        const isWide = container.classList.toggle("sidebar-wide");
+        btn.textContent = isWide ? "↔ Narrow" : "↔ Wide";
+        
+        localStorage.setItem("fastblog_sidebar_wide", isWide);
+    }
+
+    toggleSidebarHeight() {
+        const btn = document.getElementById("sidebar-height-toggle");
+        const container = this.dom.workspaceContainer;
+        if (!container || !btn) return;
+
+        const isFullHeight = container.classList.toggle("sidebar-full-height");
+        btn.textContent = isFullHeight ? "↕ Scroll View" : "↕ Full Height";
+        
+        localStorage.setItem("fastblog_sidebar_full_height", isFullHeight);
     }
 
     toggleBoard(model) {

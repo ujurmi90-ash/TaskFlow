@@ -1,3 +1,13 @@
+// Add global error handling for debugging uncaught exceptions
+window.addEventListener('error', (e) => {
+  console.error('[Global Error]', e.message, 'at', e.filename, 'line', e.lineno);
+  alert(`UI Error: ${e.message}\nFile: ${e.filename}\nLine: ${e.lineno}`);
+});
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('[Unhandled Rejection]', e.reason);
+  alert(`Unhandled Rejection: ${e.reason?.message || e.reason}`);
+});
+
 // Check if this is the system browser receiving the OAuth redirect token for the desktop app
 const hash = window.location.hash.substring(1);
 const params = new URLSearchParams(hash);
