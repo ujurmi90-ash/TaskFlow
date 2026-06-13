@@ -247,7 +247,7 @@ class Database {
       const { CONFIG } = await import('../config.js');
       return members.map(m => {
         const name = typeof m === 'object' && m !== null ? m.name : m;
-        const defaultMember = CONFIG.TEAM_MEMBERS.find(dm => dm.name.toLowerCase() === name.toLowerCase());
+        const defaultMember = CONFIG.TEAM_MEMBERS.find(dm => (dm.name || '').toLowerCase() === (name || '').toLowerCase());
         if (defaultMember) {
           return {
             name: defaultMember.name,

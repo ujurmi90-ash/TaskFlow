@@ -108,7 +108,7 @@ export class TeamModal {
         return;
       }
       
-      if (this.members.some(m => m.name.toLowerCase() === name.toLowerCase())) {
+      if (this.members.some(m => (m.name || '').toLowerCase() === (name || '').toLowerCase())) {
         EventBus.emit('toast:show', { type: 'info', message: 'Member already exists' });
         return;
       }

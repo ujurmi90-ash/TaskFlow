@@ -22,7 +22,11 @@ export class ByPerson {
 
   _groupByPerson(tasks) {
     const map = new Map();
-    AppState.teamMembers.forEach(m => map.set(typeof m === 'object' && m !== null ? m.name : m, []));
+    const members = AppState.teamMembers || CONFIG.TEAM_MEMBERS;
+    members.forEach(m => {
+      const name = typeof m === 'object' && m !== null ? (m.name || '') : (m || '');
+      if (name) map.set(name, []);
+    });
     map.set('Unassigned', []);
 
     tasks.forEach(t => {

@@ -13,9 +13,9 @@ export class MyTasks {
 
     // Match identity against the team directory
     const myMember = (AppState.teamMembers || []).find(m => {
-      const mName = typeof m === 'object' && m !== null ? m.name : m;
-      const mEmail = typeof m === 'object' && m !== null ? m.email : '';
-      return mEmail.toLowerCase() === userEmail || mName.toLowerCase() === userName;
+      const mName = typeof m === 'object' && m !== null ? (m.name || '') : (m || '');
+      const mEmail = typeof m === 'object' && m !== null ? (m.email || '') : '';
+      return (userEmail && mEmail.toLowerCase() === userEmail) || (userName && mName.toLowerCase() === userName);
     });
 
     const myName = myMember ? (typeof myMember === 'object' ? myMember.name : myMember) : null;
@@ -259,10 +259,10 @@ export class MyTasks {
 
         try {
           const members = (AppState.teamMembers || []).map(m => {
-            const mName = typeof m === 'object' && m !== null ? m.name : m;
-            const mEmail = typeof m === 'object' && m !== null ? m.email : '';
-            const mRole = typeof m === 'object' && m !== null ? m.role : '';
-            if (mName.toLowerCase() === name.toLowerCase()) {
+            const mName = typeof m === 'object' && m !== null ? (m.name || '') : (m || '');
+            const mEmail = typeof m === 'object' && m !== null ? (m.email || '') : '';
+            const mRole = typeof m === 'object' && m !== null ? (m.role || '') : '';
+            if (mName.toLowerCase() === (name || '').toLowerCase()) {
               return { name: mName, email: email, role: mRole };
             }
             return typeof m === 'object' ? m : { name: mName, email: mEmail, role: mRole };
@@ -296,7 +296,7 @@ export class MyTasks {
           return { name: m, email: '', role: '' };
         });
 
-        if (members.some(m => m.name.toLowerCase() === name.toLowerCase())) {
+        if (members.some(m => (m.name || '').toLowerCase() === (name || '').toLowerCase())) {
           EventBus.emit('toast:show', { type: 'info', message: 'A profile with that name already exists. Please click it in the list above to link.' });
           return;
         }
