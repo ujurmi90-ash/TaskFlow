@@ -16,10 +16,11 @@ class GmailService {
     return res;
   }
 
-  async fetchMessages(query = '', maxResults = 20, pageToken = null) {
+  async fetchMessages(query = '', maxResults = 20, pageToken = null, labelId = null) {
     let url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${maxResults}`;
     if (query) url += `&q=${encodeURIComponent(query)}`;
     if (pageToken) url += `&pageToken=${pageToken}`;
+    if (labelId) url += `&labelIds=${encodeURIComponent(labelId)}`;
 
     const res = await this._fetch(url);
     const data = await res.json();
@@ -31,6 +32,13 @@ class GmailService {
     );
 
     return { messages, nextPageToken: data.nextPageToken || null };
+  }
+
+  async fetchLabels() {
+    const url = 'https://gmail.googleapis.com/gmail/v1/users/me/labels';
+    const res = await this._fetch(url);
+    const data = await res.json();
+    return data.labels || [];
   }
 
   async fetchMessage(id) {

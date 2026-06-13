@@ -1,0 +1,26 @@
+{
+  "name": "FastBlog - AI Blog Compiler",
+  "short_name": "FastBlog",
+  "description": "Multi-model AI blog writer, compiler and artwork strategist.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#070913",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "allies_logo.png",
+      "sizes": "100x100",
+      "type": "image/png"
+    },
+    {
+      "src": "brandnook_logo.png",
+      "sizes": "243x243",
+      "type": "image/png"
+    },
+    {
+      "src": "cr_logo.png",
+      "sizes": "298x298",
+      "type": "image/png"
+    }
+  ]
+}

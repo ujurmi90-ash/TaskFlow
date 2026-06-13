@@ -8,7 +8,18 @@ export class EmailView {
     this.nextPageToken = null;
     this.query = '';
     this.sortBy = 'date-desc';
-    this.activeTab = 'inbox'; // 'inbox' | 'sent'
+    this.labels = [];
+    this.activeLabelId = 'INBOX';
+    this.loadingLabels = false;
+
+    // Reset view state when auth status changes
+    EventBus.on('auth:changed', () => {
+      this.emails = [];
+      this.labels = [];
+      this.activeLabelId = 'INBOX';
+      this.nextPageToken = null;
+      this.query = '';
+    });
   }
 
   render(container) {
@@ -54,16 +65,32 @@ export class EmailView {
             <input type="text" placeholder="Search emails (Gmail syntax supported)..." id="email-search" value="${this.query}"/>
             <button class="btn btn-primary btn-sm" id="email-search-btn">Search</button>
           </div>
-          
-          <!-- Folder Tabs Toggle -->
-          <div class="flex gap-xs" style="background:var(--bg-card); border:1px solid var(--border-color); padding:4px; border-radius:var(--radius-md);">
-            <button class="btn ${this.activeTab === 'inbox' ? 'btn-primary' : 'btn-ghost'} btn-sm" id="email-tab-inbox" style="padding:6px 14px; font-size:var(--text-xs); border:none; ${this.activeTab === 'inbox' ? 'background:var(--accent-gradient);' : ''}">📥 Inbox</button>
-            <button class="btn ${this.activeTab === 'sent' ? 'btn-primary' : 'btn-ghost'} btn-sm" id="email-tab-sent" style="padding:6px 14px; font-size:var(--text-xs); border:none; ${this.activeTab === 'sent' ? 'background:var(--accent-gradient);' : ''}">📤 Sent Mail</button>
+
+          <!-- Folder Select Dropdown -->
+          <div class="flex items-center gap-xs">
+            <span class="text-xs text-muted font-mono">FOLDER:</span>
+            <select class="form-select" id="email-folder-select" style="width:auto; height:38px; font-size:var(--text-xs); border-radius:var(--radius-md); padding-right: 32px; background:var(--bg-card); border:1px solid var(--border-color); color:var(--text-primary);">
+              ${this.labels.map(l => {
+                const isSelected = this.activeLabelId === l.id;
+                let displayName = l.name;
+                if (l.id === 'INBOX') displayName = '📥 Inbox';
+                else if (l.id === 'SENT') displayName = '📤 Sent Mail';
+                else if (l.id === 'STARRED') displayName = '⭐ Starred';
+                else if (l.id === 'IMPORTANT') displayName = '🏷️ Important';
+                else displayName = `📁 ${displayName}`;
+
+                return `<option value="${l.id}" ${isSelected ? 'selected' : ''}>${this._esc(displayName)}</option>`;
+              }).join('')}
+              ${this.labels.length === 0 ? `
+                <option value="INBOX" selected>📥 Inbox</option>
+                <option value="SENT">📤 Sent Mail</option>
+              ` : ''}
+            </select>
           </div>
 
           <div class="flex items-center gap-xs">
             <span class="text-xs text-muted font-mono">SORT:</span>
-            <select class="form-select" id="email-sort-select" style="width:auto; height:38px; font-size:var(--text-xs); border-radius:var(--radius-md); padding-right: 32px;">
+            <select class="form-select" id="email-sort-select" style="width:auto; height:38px; font-size:var(--text-xs); border-radius:var(--radius-md); padding-right: 32px; background:var(--bg-card); border:1px solid var(--border-color); color:var(--text-primary);">
               <option value="date-desc" ${this.sortBy === 'date-desc' ? 'selected' : ''}>Newest First</option>
               <option value="important-first" ${this.sortBy === 'important-first' ? 'selected' : ''}>Important First</option>
               <option value="important-only" ${this.sortBy === 'important-only' ? 'selected' : ''}>Important Only</option>
@@ -92,14 +119,16 @@ export class EmailView {
 
     this._bindEvents(container);
 
-    // Auto-load on first render
-    if (this.emails.length === 0 && !this.loading) {
+    // Auto-load labels, then load emails
+    if (this.labels.length === 0 && !this.loadingLabels) {
+      this._fetchLabels(container);
+    } else if (this.emails.length === 0 && !this.loading) {
       this._fetchEmails(container);
     }
   }
 
   _renderEmailCard(e, isImportant) {
-    const isSentFolder = this.activeTab === 'sent';
+    const isSentFolder = this.activeLabelId === 'SENT';
     const contactName = isSentFolder ? this._extractName(e.to) : this._extractName(e.from);
     const contactEmail = isSentFolder ? e.to : e.from;
     const dateStr = this._formatEmailDate(e.date);
@@ -141,15 +170,52 @@ export class EmailView {
     `).join('');
   }
 
+  async _fetchLabels(container) {
+    if (this.loadingLabels) return;
+    this.loadingLabels = true;
+
+    try {
+      const rawLabels = await gmailService.fetchLabels();
+      const systemIds = ['INBOX', 'SENT', 'STARRED', 'IMPORTANT'];
+      const filtered = rawLabels.filter(l => {
+        if (systemIds.includes(l.id)) return true;
+        return l.type === 'user';
+      });
+
+      filtered.sort((a, b) => {
+        const aIndex = systemIds.indexOf(a.id);
+        const bIndex = systemIds.indexOf(b.id);
+        if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+        if (aIndex !== -1) return -1;
+        if (bIndex !== -1) return 1;
+        return a.name.localeCompare(b.name);
+      });
+
+      this.labels = filtered;
+    } catch (err) {
+      console.error('Failed to fetch Gmail labels:', err);
+      this.labels = [
+        { id: 'INBOX', name: 'Inbox', type: 'system' },
+        { id: 'SENT', name: 'Sent Mail', type: 'system' },
+        { id: 'STARRED', name: 'Starred', type: 'system' },
+        { id: 'IMPORTANT', name: 'Important', type: 'system' }
+      ];
+    } finally {
+      this.loadingLabels = false;
+      if (this.emails.length === 0 && !this.loading) {
+        this._fetchEmails(container);
+      } else {
+        this.render(container);
+      }
+    }
+  }
+
   async _fetchEmails(container) {
     this.loading = true;
     this.render(container);
 
     try {
-      const activeLabel = this.activeTab === 'inbox' ? 'label:INBOX' : 'label:SENT';
-      const finalQuery = this.query ? `(${this.query}) ${activeLabel}` : activeLabel;
-      
-      const result = await gmailService.fetchMessages(finalQuery, 15, this.nextPageToken);
+      const result = await gmailService.fetchMessages(this.query, 15, this.nextPageToken, this.activeLabelId);
       this.emails = [...this.emails, ...result.messages];
       this.nextPageToken = result.nextPageToken;
     } catch (err) {
@@ -183,18 +249,9 @@ export class EmailView {
       this._fetchEmails(container);
     });
 
-    // Tab switching
-    container.querySelector('#email-tab-inbox')?.addEventListener('click', () => {
-      if (this.activeTab === 'inbox') return;
-      this.activeTab = 'inbox';
-      this.emails = [];
-      this.nextPageToken = null;
-      this._fetchEmails(container);
-    });
-
-    container.querySelector('#email-tab-sent')?.addEventListener('click', () => {
-      if (this.activeTab === 'sent') return;
-      this.activeTab = 'sent';
+    // Folder change
+    container.querySelector('#email-folder-select')?.addEventListener('change', (e) => {
+      this.activeLabelId = e.target.value;
       this.emails = [];
       this.nextPageToken = null;
       this._fetchEmails(container);
