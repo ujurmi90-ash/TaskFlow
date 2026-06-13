@@ -229,7 +229,7 @@ export class MyTasks {
                       <div class="flex-col flex-1 min-width:0;">
                         <span class="task-mini-title" style="font-weight:600; color:var(--text-primary);">${this._esc(t.title)}</span>
                         <div class="flex items-center gap-xs mt-sm flex-wrap">
-                          <span class="badge badge-priority-${t.priority.toLowerCase()}">${t.priority}</span>
+                          <span class="badge badge-priority-${(t.priority || 'Medium').toLowerCase()}">${t.priority || 'Medium'}</span>
                           ${t.project ? `<span class="text-xs text-accent" style="font-family:var(--font-mono);">${t.project}</span>` : ''}
                           ${t.endDate ? `<span class="text-xs text-muted" style="margin-left:auto; font-family:var(--font-mono);">Due: ${t.endDate}</span>` : ''}
                         </div>

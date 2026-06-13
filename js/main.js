@@ -63,8 +63,9 @@ window.EventBus = {
 // ---- App Init ----
 async function init() {
   try {
-    await db.init();
-    console.log('Database initialized');
+    const initialEmail = localStorage.getItem('taskflow_last_active_email') || '';
+    await db.init(initialEmail);
+    console.log('Database initialized for user:', initialEmail || 'local');
 
     // Init toast system
     const toast = new Toast();
@@ -102,20 +103,36 @@ async function init() {
       window.AppState.isAuthenticated = isSignedIn;
       window.AppState.user = profile;
 
+      const activeEmail = localStorage.getItem('taskflow_last_active_email') || '';
+
       if (isSignedIn) {
+        const userEmail = profile?.email || '';
+        localStorage.setItem('taskflow_last_active_email', userEmail);
+
+        // Re-open database with new suffix if needed
+        await db.init(userEmail);
+
         const tasks = await db.getAllTasks();
         window.AppState.tasks = tasks;
+        window.AppState.teamMembers = await db.getTeamMembers();
 
         // Start sync after login
         syncService.init().catch(err => {
           console.warn('Sync init failed:', err);
         });
       } else {
-        window.AppState.tasks = [];
+        // Fall back to local or whatever last active user email was (for offline support)
+        await db.init(activeEmail);
+
+        const tasks = await db.getAllTasks();
+        window.AppState.tasks = tasks;
+        window.AppState.teamMembers = await db.getTeamMembers();
+
         syncService.stop();
       }
 
       EventBus.emit('auth:changed', { isSignedIn, profile });
+      EventBus.emit('tasks:updated', { isSync: true });
     });
 
     // Listen for task updates — trigger sync after local changes

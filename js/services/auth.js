@@ -208,6 +208,7 @@ class AuthService {
       }
     }
     this._clearSession();
+    localStorage.removeItem('taskflow_last_active_email');
     this._notifyListeners();
   }
 

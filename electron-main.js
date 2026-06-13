@@ -109,6 +109,7 @@ function createWindow() {
   });
 
   mainWindow.loadURL('http://localhost:8000/?platform=desktop');
+  mainWindow.webContents.openDevTools();
 
   // Intercept new window requests (e.g. target="_blank" or window.open)
   // Force all popup requests (like Google OAuth and external links) to open in the user's default browser.

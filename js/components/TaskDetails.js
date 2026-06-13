@@ -121,7 +121,7 @@ export class TaskDetails {
                   <div class="task-details-item-title">${this._escHtml(t.title)}</div>
                   <div class="task-details-item-meta">
                     <span class="badge badge-status-${this._statusClass(t.status)}">${t.status}</span>
-                    <span class="badge badge-priority-${t.priority.toLowerCase()}">${t.priority}</span>
+                    <span class="badge badge-priority-${(t.priority || 'Medium').toLowerCase()}">${t.priority || 'Medium'}</span>
                     ${t.project ? `<span class="text-xs text-accent truncate" style="max-width:80px;">${t.project}</span>` : ''}
                     
                     ${t.owners && t.owners.length > 0 ? `
@@ -191,8 +191,8 @@ export class TaskDetails {
           <span class="badge badge-status-${this._statusClass(t.status)}" style="font-size:var(--text-xs); padding:4px 10px;">
             ${t.status}
           </span>
-          <span class="badge badge-priority-${t.priority.toLowerCase()}" style="font-size:var(--text-xs); padding:4px 10px;">
-            Priority: ${t.priority}
+          <span class="badge badge-priority-${(t.priority || 'Medium').toLowerCase()}" style="font-size:var(--text-xs); padding:4px 10px;">
+            Priority: ${t.priority || 'Medium'}
           </span>
           ${t.taskType ? `<span class="badge badge-secondary" style="font-size:var(--text-xs); padding:4px 10px; background:var(--bg-glass-heavy); border:1px solid var(--border-color);">${t.taskType}</span>` : ''}
         </div>

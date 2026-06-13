@@ -1,0 +1,16 @@
+{
+  "name": "fastblog-compiler",
+  "version": "1.0.0",
+  "description": "Multi-model AI blog compiler dashboard with image generation and approval workflow.",
+  "scripts": {
+    "start": "npx http-server ./ -p 8080"
+  },
+  "keywords": [
+    "blogging",
+    "ai",
+    "compiler",
+    "editor"
+  ],
+  "author": "",
+  "license": "ISC"
+}

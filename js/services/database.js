@@ -7,7 +7,24 @@ class Database {
     this.db = null;
   }
 
-  init() {
+  init(userEmail = '') {
+    let suffix = 'local';
+    if (userEmail) {
+      suffix = userEmail.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    }
+    const newDbName = `TaskFlowDB_${suffix}`;
+
+    if (this.db) {
+      if (this.dbName === newDbName) {
+        return Promise.resolve();
+      }
+      this.db.close();
+      this.db = null;
+    }
+
+    this.dbName = newDbName;
+    console.log(`[Database] Opening database: ${this.dbName}`);
+
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(this.dbName, this.version);
 
@@ -31,8 +48,13 @@ class Database {
         }
       };
 
-      request.onsuccess = (e) => {
+      request.onsuccess = async (e) => {
         this.db = e.target.result;
+        try {
+          await this.migrateOldDatabaseIfNeeded();
+        } catch (err) {
+          console.warn('[Database] Migration error during init:', err);
+        }
         resolve();
       };
 
@@ -41,6 +63,92 @@ class Database {
         reject(e);
       };
     });
+  }
+
+  async migrateOldDatabaseIfNeeded() {
+    if (localStorage.getItem('taskflow_migrated_from_v1') === 'true') {
+      return;
+    }
+
+    console.log('[Migration] Checking if old TaskFlowDB needs migration...');
+    try {
+      const oldDb = await new Promise((resolve, reject) => {
+        const req = indexedDB.open('TaskFlowDB', 1);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+        req.onupgradeneeded = (e) => {
+          // If it was upgraded, it didn't exist or was empty version. We don't want to create stores.
+        };
+      });
+
+      if (!oldDb.objectStoreNames.contains('tasks')) {
+        oldDb.close();
+        localStorage.setItem('taskflow_migrated_from_v1', 'true');
+        return;
+      }
+
+      // Read tasks
+      const oldTasks = await new Promise((resolve, reject) => {
+        try {
+          const tx = oldDb.transaction('tasks', 'readonly');
+          const store = tx.objectStore('tasks');
+          const req = store.getAll();
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        } catch (e) {
+          resolve([]);
+        }
+      });
+
+      // Read team members
+      let oldTeam = [];
+      if (oldDb.objectStoreNames.contains('customData')) {
+        oldTeam = await new Promise((resolve, reject) => {
+          try {
+            const tx = oldDb.transaction('customData', 'readonly');
+            const store = tx.objectStore('customData');
+            const req = store.get('teamMembers');
+            req.onsuccess = () => resolve(req.result?.values || []);
+            req.onerror = () => reject(req.error);
+          } catch (e) {
+            resolve([]);
+          }
+        });
+      }
+
+      oldDb.close();
+
+      if (oldTasks.length > 0 || oldTeam.length > 0) {
+        console.log(`[Migration] Found ${oldTasks.length} tasks and ${oldTeam.length} team members in old DB. Migrating...`);
+
+        // Write to current DB
+        if (oldTasks.length > 0) {
+          const store = this._tx('tasks', 'readwrite');
+          await Promise.all(oldTasks.map(t => this._request(store, 'put', t)));
+        }
+
+        if (oldTeam.length > 0) {
+          const store = this._tx('customData', 'readwrite');
+          await this._request(store, 'put', { key: 'teamMembers', values: oldTeam });
+        }
+
+        console.log('[Migration] Migration successful.');
+      }
+
+      // Delete old database
+      console.log('[Migration] Deleting old database TaskFlowDB');
+      try {
+        indexedDB.deleteDatabase('TaskFlowDB');
+      } catch (e) {
+        console.warn('[Migration] Error deleting old database:', e);
+      }
+      localStorage.setItem('taskflow_migrated_from_v1', 'true');
+
+    } catch (err) {
+      console.warn('[Migration] Error during old database migration check:', err);
+      // Set the flag anyway to avoid stuck loops
+      localStorage.setItem('taskflow_migrated_from_v1', 'true');
+    }
   }
 
   _tx(storeName, mode = 'readonly') {

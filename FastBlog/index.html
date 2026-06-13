@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="FastBlog - Dynamic multi-model AI blog compiler and content strategist with direct feedback and image generation.">
+    <title>FastBlog // AI Blog Composer & Compiler</title>
+    <!-- Google Fonts: Outfit & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="glass-bg"></div>
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+
+    <div class="app-container">
+        <!-- TOP NAVIGATION / HEADER -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-glow"></div>
+                <span class="logo-text">Fast<span>Blog</span></span>
+            </div>
+
+            <!-- Brand Workspace Dashboard Toggles -->
+            <div class="brand-workspaces" id="brand-selector-tabs">
+                <button class="brand-tab active" id="tab-allies" onclick="app.switchBrand('allies')" title="Allies Commercial Realty">
+                    <span class="brand-dot"></span> Allies
+                </button>
+                <button class="brand-tab" id="tab-brandnook" onclick="app.switchBrand('brandnook')" title="Brandnook Coworking">
+                    <span class="brand-dot"></span> Brandnook
+                </button>
+                <button class="brand-tab" id="tab-cr" onclick="app.switchBrand('cr')" title="Auto Collision Restoration">
+                    <span class="brand-dot"></span> CR
+                </button>
+            </div>
+
+            <!-- Workflow Progress Stepper -->
+            <div class="stepper-container">
+                <div class="step active" id="step-1" onclick="app.setStep(1)">
+                    <div class="step-num">1</div>
+                    <span class="step-label">Ideation</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step" id="step-2" onclick="app.setStep(2)">
+                    <div class="step-num">2</div>
+                    <span class="step-label">Compare AI</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step" id="step-3" onclick="app.setStep(3)">
+                    <div class="step-num">3</div>
+                    <span class="step-label">Compile & Write</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step" id="step-4" onclick="app.setStep(4)">
+                    <div class="step-num">4</div>
+                    <span class="step-label">Media Assets</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step" id="step-5" onclick="app.setStep(5)">
+                    <div class="step-num">5</div>
+                    <span class="step-label">Approval</span>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="app.openSettings()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    API Config
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT WRAPPER -->
+        <main class="app-workspace">
+            <!-- IDEATION BAR (Always visible at top of workspace) -->
+            <section class="workspace-panel ideation-bar">
+                <div class="input-group">
+                    <label for="blog-title">Blog Title</label>
+                    <input type="text" id="blog-title" placeholder="Enter your blog post title..." value="The Future of Agentic AI: Transforming Software Development">
+                </div>
+                <div class="input-group">
+                    <label for="blog-keywords">Target Keyword(s) <span class="dim">(comma separated)</span></label>
+                    <input type="text" id="blog-keywords" placeholder="e.g., agentic ai, software engineering" value="agentic ai, software development">
+                </div>
+                <div class="action-group">
+                    <button class="btn btn-primary btn-generate" onclick="app.generateAIContent()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon spin-target"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+                        Run Drafts
+                    </button>
+                </div>
+            </section>
+
+            <!-- THREE COLUMN COMPARISON ZONE -->
+            <div class="workspace-grid-container">
+                
+                <!-- Collapsible AI Comparison Sidebar -->
+                <aside class="ai-comparison-sidebar" id="ai-sidebar">
+                    <div class="sidebar-header">
+                        <h3>AI Model Drafts</h3>
+                        <button class="collapse-btn toggle-sidebar-btn" onclick="app.toggleSidebar()" title="Toggle Sidebar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><polyline points="11 17 6 12 11 7"></polyline><polyline points="18 17 13 12 18 7"></polyline></svg>
+                        </button>
+                    </div>
+
+                    <div class="ai-boards-stack">
+                        <!-- ChatGPT Board -->
+                        <div class="ai-board chatgpt-board active" id="board-chatgpt">
+                            <div class="board-header">
+                                <div class="brand-badge gpt-badge">
+                                    <!-- ChatGPT custom spiral SVG -->
+                                    <svg class="brand-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M21.1 11.2C21.6 10.4 21.6 9.3 21.1 8.5C20.7 7.8 20 7.3 19.1 7.2C19.1 6.3 18.7 5.4 18 4.7C17.3 4 16.4 3.6 15.5 3.6C14.9 2.8 14.1 2.3 13.1 2.1C12.1 1.9 11.1 2.1 10.3 2.7C9.5 2.2 8.4 2.2 7.6 2.7C6.9 3.1 6.4 3.8 6.3 4.7C5.4 4.7 4.5 5.1 3.8 5.8C3.1 6.5 2.7 7.4 2.7 8.3C1.9 8.9 1.4 9.7 1.2 10.7C1 11.7 1.2 12.7 1.8 13.5C1.3 14.3 1.3 15.4 1.8 16.2C2.2 16.9 2.9 17.4 3.8 17.5C3.8 18.4 4.2 19.3 4.9 20C5.6 20.7 6.5 21.1 7.4 21.1C8 21.9 8.8 22.4 9.8 22.6C10.8 22.8 11.8 22.6 12.6 22C13.4 22.5 14.5 22.5 15.3 22C16 21.6 16.5 20.9 16.6 20C17.5 20 18.4 19.6 19.1 18.9C19.8 18.2 20.2 17.3 20.2 16.4C21 15.8 21.5 15 21.7 14C21.9 13 21.7 12 21.1 11.2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                                        <path d="M15.8 12.8C16 11.7 15.7 10.6 15 9.8C14.3 9 13.2 8.5 12.1 8.5C11.5 7.7 10.5 7.2 9.5 7.2C8.5 7.2 7.5 7.7 6.9 8.5C6.1 8.7 5.4 9.2 5 10C4.6 10.8 4.6 11.8 5 12.6C4.8 13.7 5.1 14.8 5.8 15.6C6.5 16.4 7.6 16.9 8.7 16.9C9.3 17.7 10.3 18.2 11.3 18.2C12.3 18.2 13.3 17.7 13.9 16.9C14.7 16.7 15.4 16.2 15.8 15.4C16.2 14.6 16.2 13.6 15.8 12.8Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                                    </svg>
+                                    <span>ChatGPT</span>
+                                </div>
+                                <div class="header-controls">
+                                    <select class="select-tone" onchange="app.changeTone('chatgpt', this.value)">
+                                        <option value="conversational">Conversational</option>
+                                        <option value="professional" selected>Professional</option>
+                                        <option value="minimalist">Minimalist</option>
+                                    </select>
+                                    <button class="mini-btn" onclick="app.regenerateModel('chatgpt')" title="Regenerate">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+                                    </button>
+                                    <button class="mini-btn collapse-board-btn" onclick="app.toggleBoard('chatgpt')" title="Collapse Board">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="board-body-wrapper">
+                                <div class="board-body markdown-preview" id="content-chatgpt">
+                                    <!-- Dynamic content goes here -->
+                                </div>
+                                <div class="board-footer">
+                                    <button class="btn btn-small" onclick="app.insertToCompiler('chatgpt')">
+                                        Insert into Compiler
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Claude Board -->
+                        <div class="ai-board claude-board active" id="board-claude">
+                            <div class="board-header">
+                                <div class="brand-badge claude-badge">
+                                    <!-- Claude custom organic styled A SVG -->
+                                    <svg class="brand-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V15H13V17ZM15.3 11.7L13.9 13.1C13.5 13.5 13.2 13.9 13.1 14.4C13 14.7 12.8 15 12.4 15H11.6C11.2 15 11 14.7 11 14.4C11 13.6 11.3 12.9 11.9 12.3L13.3 10.9C13.7 10.5 13.9 10 13.9 9.5C13.9 8.4 13 7.5 11.9 7.5C10.8 7.5 9.9 8.4 9.9 9.5H7.9C7.9 7.3 9.7 5.5 11.9 5.5C14.1 5.5 15.9 7.3 15.9 9.5C15.9 10.4 15.6 11.2 15.3 11.7Z" fill="currentColor"/>
+                                    </svg>
+                                    <span>Claude</span>
+                                </div>
+                                <div class="header-controls">
+                                    <select class="select-tone" onchange="app.changeTone('claude', this.value)">
+                                        <option value="conversational">Conversational</option>
+                                        <option value="professional" selected>Professional</option>
+                                        <option value="minimalist">Minimalist</option>
+                                    </select>
+                                    <button class="mini-btn" onclick="app.regenerateModel('claude')" title="Regenerate">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+                                    </button>
+                                    <button class="mini-btn collapse-board-btn" onclick="app.toggleBoard('claude')" title="Collapse Board">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="board-body-wrapper">
+                                <div class="board-body markdown-preview" id="content-claude">
+                                    <!-- Dynamic content goes here -->
+                                </div>
+                                <div class="board-footer">
+                                    <button class="btn btn-small" onclick="app.insertToCompiler('claude')">
+                                        Insert into Compiler
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Perplexity Board -->
+                        <div class="ai-board perplexity-board active" id="board-perplexity">
+                            <div class="board-header">
+                                <div class="brand-badge perplexity-badge">
+                                    <!-- Perplexity custom search symbol SVG -->
+                                    <svg class="brand-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2ZM20 16H5.2L4 17.2V4H20V16ZM7 9H9V11H7V9ZM11 9H13V11H11V9ZM15 9H17V11H15V9Z" fill="currentColor"/>
+                                    </svg>
+                                    <span>Perplexity</span>
+                                </div>
+                                <div class="header-controls">
+                                    <select class="select-tone" onchange="app.changeTone('perplexity', this.value)">
+                                        <option value="conversational">Conversational</option>
+                                        <option value="professional" selected>Professional</option>
+                                        <option value="minimalist">Minimalist</option>
+                                    </select>
+                                    <button class="mini-btn" onclick="app.regenerateModel('perplexity')" title="Regenerate">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+                                    </button>
+                                    <button class="mini-btn collapse-board-btn" onclick="app.toggleBoard('perplexity')" title="Collapse Board">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="board-body-wrapper">
+                                <div class="board-body markdown-preview" id="content-perplexity">
+                                    <!-- Dynamic content goes here -->
+                                </div>
+                                <div class="board-footer">
+                                    <button class="btn btn-small" onclick="app.insertToCompiler('perplexity')">
+                                        Insert into Compiler
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Expanded Toggle Button (Visible when sidebar is collapsed) -->
+                <button class="expand-sidebar-btn hidden" id="expand-sidebar-btn" onclick="app.toggleSidebar()" title="Expand AI Panels">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>
+                    <span>AI Drafts</span>
+                </button>
+
+                <!-- COMPILER & EDITOR PANEL -->
+                <section class="workspace-panel compiler-editor">
+                    <div class="panel-header">
+                        <h2 id="compiler-title-display">Allies Content Compiler</h2>
+                        <div class="editor-modes">
+                            <span class="badge" id="writing-progress-badge">Progress: 10%</span>
+                        </div>
+                    </div>
+
+                    <div class="compiler-split-container">
+                        <!-- Collapsible Blog History Sidebar -->
+                        <aside class="blog-library-sidebar" id="blog-library-sidebar">
+                            <div class="library-subheader">
+                                <span>Brand History</span>
+                                <button class="btn btn-secondary btn-small" onclick="app.createNewBlog()" title="New Post">+ New</button>
+                            </div>
+                            <div class="library-feed" id="library-blog-list">
+                                <!-- Populated dynamically via JS -->
+                            </div>
+                        </aside>
+
+                        <!-- Editor Workspace Area -->
+                        <div class="editor-workspace-main">
+                            <!-- Editor Toolbar -->
+                            <div class="editor-toolbar">
+                                <button class="tool-btn" onclick="app.formatText('h2')" title="Heading 2"><strong>H2</strong></button>
+                                <button class="tool-btn" onclick="app.formatText('h3')" title="Heading 3"><strong>H3</strong></button>
+                                <button class="tool-btn" onclick="app.formatText('bold')" title="Bold"><strong>B</strong></button>
+                                <button class="tool-btn" onclick="app.formatText('italic')" title="Italic"><em>I</em></button>
+                                <button class="tool-btn" onclick="app.formatText('quote')" title="Blockquote">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon-small"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                                </button>
+                                <button class="tool-btn" onclick="app.formatText('list')" title="List">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon-small"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                                </button>
+                                <div class="toolbar-separator"></div>
+                                <button class="tool-btn btn-danger-text" onclick="app.clearEditor()" title="Clear Content">Clear</button>
+                            </div>
+
+                            <!-- Text Area (Compiler Input) -->
+                            <div class="editor-textarea-wrapper">
+                                <textarea id="compiler-input" placeholder="Draft your content here. Use the AI boards on the left to pull sections, or write your own paragraphs..." oninput="app.onEditorInput()"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SEO Metrics Panel -->
+                    <div class="editor-footer-metrics">
+                        <div class="metric-item">
+                            <span class="metric-label">Words:</span>
+                            <span class="metric-val" id="val-wordcount">0</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Read Time:</span>
+                            <span class="metric-val" id="val-readtime">0m</span>
+                        </div>
+                        <div class="metric-item score-item">
+                            <span class="metric-label">SEO Score:</span>
+                            <div class="score-pill-wrapper">
+                                <div class="score-bar"><div class="score-progress" id="val-seobar" style="width: 0%"></div></div>
+                                <span class="metric-val" id="val-seoscore">0%</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline btn-small" onclick="app.toggleSeoChecklist()">
+                            SEO Checklist
+                        </button>
+                    </div>
+
+                    <!-- Toggleable SEO Checklist -->
+                    <div class="seo-checklist-drawer hidden" id="seo-drawer">
+                        <h4>SEO Criteria Checklist</h4>
+                        <ul class="checklist-list">
+                            <li id="seo-chk-title"><span class="chk-box"></span> Keyword in Title</li>
+                            <li id="seo-chk-firstpara"><span class="chk-box"></span> Keyword in First Paragraph</li>
+                            <li id="seo-chk-density"><span class="chk-box"></span> Keyword Density (1-2.5%)</li>
+                            <li id="seo-chk-length"><span class="chk-box"></span> Word Count (Min 300 words)</li>
+                            <li id="seo-chk-headings"><span class="chk-box"></span> Proper Headings (H2/H3) Used</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- RIGHT SIDEBAR (IMAGE GEN & SUBMISSION FLOW) -->
+                <aside class="right-sidebar">
+                    
+                    <!-- AI IMAGE GENERATION PANEL -->
+                    <section class="workspace-panel image-generator-panel">
+                        <div class="panel-header">
+                            <h3>Blog Featured Image</h3>
+                        </div>
+                        <div class="image-prompt-area">
+                            <div class="input-group">
+                                <label for="image-prompt">Visual Concept Prompt</label>
+                                <textarea id="image-prompt" placeholder="A futuristic workspace with AI agents hologram floating over developer desk, tech neon glow, hyperrealistic."></textarea>
+                            </div>
+                            <button class="btn btn-secondary btn-full btn-image-gen" onclick="app.generateMockImage()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                Generate Blog Artwork
+                            </button>
+                        </div>
+
+                        <!-- Preview Area for generated image -->
+                        <div class="image-preview-container">
+                            <div class="image-aspect-selectors">
+                                <span class="aspect-label">Aspect:</span>
+                                <button class="aspect-btn active" onclick="app.setAspect('16-9')">16:9</button>
+                                <button class="aspect-btn" onclick="app.setAspect('1-1')">1:1</button>
+                                <button class="aspect-btn" onclick="app.setAspect('4-5')">4:5</button>
+                            </div>
+                            <div class="preview-box aspect-16-9" id="blog-image-box">
+                                <div class="placeholder-content">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="placeholder-icon"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                    <span>No artwork generated yet</span>
+                                </div>
+                                <img src="" id="compiled-blog-image" class="hidden" alt="Generated blog hero image">
+                                <div class="image-spinner hidden" id="image-spinner">
+                                    <div class="spinner"></div>
+                                    <span>Rendering canvas...</span>
+                                </div>
+                            </div>
+                            <div class="image-gallery-list hidden" id="mock-gallery">
+                                <span class="gallery-title">Recent Concept Runs:</span>
+                                <div class="gallery-grid" id="gallery-grid">
+                                    <!-- Dynamic mock images populate here -->
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- APPROVAL & WORKFLOW PANEL -->
+                    <section class="workspace-panel workflow-panel">
+                        <div class="panel-header">
+                            <h3>Workflow & Approval</h3>
+                        </div>
+                        <div class="workflow-status-area">
+                            <div class="status-indicator">
+                                <span class="status-dot status-draft" id="status-dot"></span>
+                                <span class="status-text" id="status-text">Draft Phase</span>
+                            </div>
+                            <button class="btn btn-primary btn-full" id="btn-share-boss" onclick="app.openShareModal()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+                                Send to Boss for Approval
+                            </button>
+                        </div>
+
+                        <!-- Feedback Panel -->
+                        <div class="boss-comments-wrapper">
+                            <span class="section-title">Stakeholder Activity:</span>
+                            <div class="comments-list" id="approval-timeline">
+                                <div class="timeline-empty" id="timeline-empty">
+                                    No reviews requested yet. Publish or share with your boss to trigger a mock approval feedback chain.
+                                </div>
+                                <!-- Comments dynamically injected here -->
+                            </div>
+                        </div>
+
+                        <div class="export-actions-wrapper hidden" id="export-actions">
+                            <button class="btn btn-full btn-small" onclick="app.exportBlog('word')" style="background: linear-gradient(135deg, #2b579a 0%, #1e3a60 100%); border-color: #2b579a; color: white;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                Download Word .doc File
+                            </button>
+                            <button class="btn btn-outline btn-full btn-small" onclick="app.exportBlog('markdown')">
+                                Export Markdown
+                            </button>
+                            <button class="btn btn-secondary btn-full btn-small" onclick="app.exportBlog('html')">
+                                Export HTML Package
+                            </button>
+                        </div>
+                    </section>
+                </aside>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL 1: SHARE & APPROVAL VIEW -->
+    <div class="modal-backdrop hidden" id="share-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Send Blog Draft to Boss</h3>
+                <button class="close-modal-btn" onclick="app.closeShareModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="dim">This triggers the simulated review process. Your boss (mock reviewer) will read the compiled post and visual asset, and provide feedback on this dashboard.</p>
+                <div class="preview-card-compact">
+                    <div class="compact-img-box">
+                        <img id="modal-preview-img" src="" alt="Thumbnail placeholder">
+                    </div>
+                    <div class="compact-info">
+                        <h4 id="modal-preview-title">Title</h4>
+                        <span id="modal-preview-meta">0 words // SEO: 0%</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="boss-email">Boss / Reviewer Name</label>
+                    <input type="text" id="boss-name" value="Mr. CEO / Project Director">
+                </div>
+                <div class="input-group">
+                    <label for="boss-instructions">Message / Note to Reviewer</label>
+                    <textarea id="boss-instructions" placeholder="Please review the AI-assisted draft and generated featured graphic. Let me know if we are good to publish!">Hey, I've compiled the draft from ChatGPT, Claude, and Perplexity, and also generated a featured cover. Please review!</textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="app.closeShareModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="app.sendToBoss()">Submit for Review</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: SETTINGS / API KEY INFO -->
+    <div class="modal-backdrop hidden" id="settings-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>API Configuration Settings</h3>
+                <button class="close-modal-btn" onclick="app.closeSettings()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <strong>Note:</strong> By default, FastBlog uses highly sophisticated local mock algorithms that generate content matching your topic and keywords. You can supply real keys below to hook up live models.
+                </div>
+                <div class="input-group">
+                    <label for="setting-openai-key">OpenAI API Key (ChatGPT)</label>
+                    <input type="password" id="setting-openai-key" placeholder="sk-...">
+                </div>
+                <div class="input-group">
+                    <label for="setting-anthropic-key">Anthropic API Key (Claude)</label>
+                    <input type="password" id="setting-anthropic-key" placeholder="sk-ant-...">
+                </div>
+                <div class="input-group">
+                    <label for="setting-perplexity-key">Perplexity API Key</label>
+                    <input type="password" id="setting-perplexity-key" placeholder="pplx-...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="app.saveSettings()">Save Configuration</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
