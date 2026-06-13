@@ -138,6 +138,7 @@ class AuthService {
           const res = await fetch('/api/get-token');
           const data = await res.json();
           if (data && data.token) {
+            console.log('[AuthService] Token received via polling, access_token present:', !!data.token.access_token);
             clearInterval(this._pollInterval);
             this.accessToken = data.token.access_token;
             const expiresIn = data.token.expires_in || 3600;

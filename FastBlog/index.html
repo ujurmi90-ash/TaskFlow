@@ -28,13 +28,26 @@
             <!-- Brand Workspace Dashboard Toggles -->
             <div class="brand-workspaces" id="brand-selector-tabs">
                 <button class="brand-tab active" id="tab-allies" onclick="app.switchBrand('allies')" title="Allies Commercial Realty">
-                    <span class="brand-dot"></span> Allies
+                    <svg class="brand-tab-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 21h18"></path>
+                        <path d="M9 21V9a3 3 0 0 1 3-3h0a3 3 0 0 1 3 3v12"></path>
+                        <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path>
+                    </svg> Allies
                 </button>
                 <button class="brand-tab" id="tab-brandnook" onclick="app.switchBrand('brandnook')" title="Brandnook Coworking">
-                    <span class="brand-dot"></span> Brandnook
+                    <svg class="brand-tab-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg> Brandnook
                 </button>
                 <button class="brand-tab" id="tab-cr" onclick="app.switchBrand('cr')" title="Auto Collision Restoration">
-                    <span class="brand-dot"></span> CR
+                    <svg class="brand-tab-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path>
+                        <circle cx="7" cy="17" r="2"></circle>
+                        <circle cx="17" cy="17" r="2"></circle>
+                    </svg> CR
                 </button>
             </div>
 
@@ -101,9 +114,17 @@
                 <aside class="ai-comparison-sidebar" id="ai-sidebar">
                     <div class="sidebar-header">
                         <h3>AI Model Drafts</h3>
-                        <button class="collapse-btn toggle-sidebar-btn" onclick="app.toggleSidebar()" title="Toggle Sidebar">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><polyline points="11 17 6 12 11 7"></polyline><polyline points="18 17 13 12 18 7"></polyline></svg>
-                        </button>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button class="mini-btn" id="sidebar-size-toggle" onclick="app.toggleSidebarWidth()" title="Toggle Wide/Narrow View" style="font-size: 10px; font-weight: 700; padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 4px; background: rgba(255, 255, 255, 0.03); color: var(--text-secondary);">
+                                ↔ Wide
+                            </button>
+                            <button class="mini-btn" id="sidebar-height-toggle" onclick="app.toggleSidebarHeight()" title="Toggle Full/Compact Height" style="font-size: 10px; font-weight: 700; padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 4px; background: rgba(255, 255, 255, 0.03); color: var(--text-secondary);">
+                                ↕ Full Height
+                            </button>
+                            <button class="collapse-btn toggle-sidebar-btn" onclick="app.toggleSidebar()" title="Toggle Sidebar">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><polyline points="11 17 6 12 11 7"></polyline><polyline points="18 17 13 12 18 7"></polyline></svg>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="ai-boards-stack">

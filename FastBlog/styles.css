@@ -265,6 +265,7 @@ body {
 /* WORKSPACE BAR (Title/Keywords) */
 .ideation-bar {
     display: flex;
+    flex-direction: row !important; /* Force horizontal layout over workspace-panel */
     gap: 20px;
     align-items: flex-end;
     padding: 20px;
@@ -273,6 +274,19 @@ body {
     border: 1px solid var(--border-color);
     border-radius: 16px;
     box-shadow: var(--shadow-premium);
+    width: 100%;
+}
+
+.ideation-bar .input-group:nth-child(1) {
+    flex: 3; /* Title gets 3x space */
+}
+
+.ideation-bar .input-group:nth-child(2) {
+    flex: 2; /* Keywords gets 2x space */
+}
+
+.ideation-bar .action-group {
+    flex: 0 0 auto;
 }
 
 .input-group {
@@ -409,10 +423,14 @@ textarea {
 /* WORKSPACE GRID */
 .workspace-grid-container {
     display: grid;
-    grid-template-columns: 360px 1fr 340px;
+    grid-template-columns: var(--sidebar-width, 360px) 1fr 340px;
     gap: 20px;
     align-items: start;
     transition: var(--transition-normal);
+}
+
+.workspace-grid-container.sidebar-wide {
+    --sidebar-width: 580px;
 }
 
 .workspace-grid-container.sidebar-collapsed {
@@ -798,7 +816,7 @@ textarea {
 }
 
 .score-bar {
-    width: 80px;
+    width: 120px; /* Wider progress bar */
     height: 6px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 3px;
@@ -834,9 +852,10 @@ textarea {
 
 .checklist-list {
     list-style: none;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 24px;
+    padding-top: 4px;
 }
 
 .checklist-list li {
@@ -846,6 +865,8 @@ textarea {
     align-items: center;
     gap: 8px;
     transition: var(--transition-fast);
+    flex: 1 1 180px;
+    min-width: 160px;
 }
 
 .chk-box {

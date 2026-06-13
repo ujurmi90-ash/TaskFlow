@@ -48,13 +48,12 @@ class Database {
         }
       };
 
-      request.onsuccess = async (e) => {
+      request.onsuccess = (e) => {
         this.db = e.target.result;
-        try {
-          await this.migrateOldDatabaseIfNeeded();
-        } catch (err) {
-          console.warn('[Database] Migration error during init:', err);
-        }
+        // Run migration in the background so it doesn't block startup/login rendering
+        this.migrateOldDatabaseIfNeeded().catch(err => {
+          console.warn('[Database] Background migration warning:', err);
+        });
         resolve();
       };
 
@@ -73,12 +72,10 @@ class Database {
     console.log('[Migration] Checking if old TaskFlowDB needs migration...');
     try {
       const oldDb = await new Promise((resolve, reject) => {
-        const req = indexedDB.open('TaskFlowDB', 1);
+        // Open without version to avoid version change blocked states
+        const req = indexedDB.open('TaskFlowDB');
         req.onsuccess = () => resolve(req.result);
         req.onerror = () => reject(req.error);
-        req.onupgradeneeded = (e) => {
-          // If it was upgraded, it didn't exist or was empty version. We don't want to create stores.
-        };
       });
 
       if (!oldDb.objectStoreNames.contains('tasks')) {
@@ -133,6 +130,9 @@ class Database {
         }
 
         console.log('[Migration] Migration successful.');
+        if (window.EventBus) {
+          window.EventBus.emit('tasks:updated');
+        }
       }
 
       // Delete old database

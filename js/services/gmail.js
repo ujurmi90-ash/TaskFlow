@@ -86,6 +86,16 @@ class GmailService {
     }
   }
 
+  async markAsRead(id) {
+    const url = `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}/modify`;
+    const res = await this._fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ removeLabelIds: ['UNREAD'] })
+    });
+    return await res.json();
+  }
+
   async sendEmail(to, subject, body) {
     const email = [
       `To: ${to}`,

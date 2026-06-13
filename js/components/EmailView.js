@@ -103,14 +103,19 @@ export class EmailView {
     const contactName = isSentFolder ? this._extractName(e.to) : this._extractName(e.from);
     const contactEmail = isSentFolder ? e.to : e.from;
     const dateStr = this._formatEmailDate(e.date);
+    const isUnread = (e.labelIds || []).includes('UNREAD');
+
     return `
-      <div class="email-card" data-email-id="${e.id}">
+      <div class="email-card ${isUnread ? 'unread' : 'read'}" data-email-id="${e.id}">
         <div class="email-important-toggle" data-email-id="${e.id}" style="cursor:pointer; font-size:1.2rem; user-select:none; margin-right:4px; display:flex; align-items:center;" title="${isImportant ? 'Mark Unimportant' : 'Mark Important'}">
           ${isImportant ? '⭐' : '☆'}
         </div>
         <div class="sender-avatar" style="background:${hashColor(contactName)}">${getInitials(contactName)}</div>
         <div class="email-content">
-          <div class="email-subject">${this._esc(e.subject || '(no subject)')}</div>
+          <div class="email-subject" style="display:flex; align-items:center; gap:8px;">
+            ${isUnread ? '<span class="unread-dot" style="width:8px; height:8px; border-radius:50%; background:#3b82f6; display:inline-block; flex-shrink:0;" title="Unread"></span>' : ''}
+            <span class="subject-text" style="flex:1; overflow:hidden; text-overflow:ellipsis;">${this._esc(e.subject || '(no subject)')}</span>
+          </div>
           <div class="email-from">${isSentFolder ? 'To: ' : ''}${this._esc(contactName)} <span class="text-muted" style="font-size:0.75rem;">&lt;${this._esc(contactEmail)}&gt;</span></div>
           <div class="email-snippet">${this._esc(e.snippet)}</div>
         </div>
@@ -248,11 +253,25 @@ export class EmailView {
 
     // Click card to open full email details
     container.querySelectorAll('.email-card').forEach(card => {
-      card.addEventListener('click', (e) => {
+      card.addEventListener('click', async (e) => {
         if (e.target.closest('.email-actions') || e.target.closest('.email-important-toggle')) return;
         const email = this.emails.find(em => em.id === card.dataset.emailId);
         if (email) {
           EventBus.emit('email:open', email);
+
+          // Mark as read in background if unread
+          if ((email.labelIds || []).includes('UNREAD')) {
+            try {
+              await gmailService.markAsRead(email.id);
+              email.labelIds = email.labelIds.filter(l => l !== 'UNREAD');
+              card.classList.remove('unread');
+              card.classList.add('read');
+              const dot = card.querySelector('.unread-dot');
+              if (dot) dot.remove();
+            } catch (err) {
+              console.warn('[Gmail] Failed to mark email as read:', err);
+            }
+          }
         }
       });
     });

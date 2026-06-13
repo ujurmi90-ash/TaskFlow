@@ -33,10 +33,12 @@ function startStaticServer(port) {
       req.on('end', () => {
         try {
           pendingToken = JSON.parse(body);
+          console.log('[Main Process] Received token from browser, saved to pendingToken.');
           res.statusCode = 200;
           res.setHeader('Content-Type', 'text/plain');
           res.end('OK');
         } catch (e) {
+          console.error('[Main Process] Invalid JSON received on /api/save-token:', e);
           res.statusCode = 400;
           res.end('Invalid JSON');
         }
@@ -45,6 +47,9 @@ function startStaticServer(port) {
     }
 
     if (req.method === 'GET' && parsedUrl === '/api/get-token') {
+      if (pendingToken) {
+        console.log('[Main Process] /api/get-token polled. pendingToken exists: true');
+      }
       res.statusCode = 200;
       res.setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify({ token: pendingToken }));
