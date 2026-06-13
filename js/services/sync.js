@@ -262,13 +262,40 @@ class SyncService {
 
   async _writeLocalDB(state) {
     if (state.tasks && state.tasks.length > 0) {
-      // Clear and re-import all tasks
-      await db.clearAllTasks();
-      await db.importTasks(state.tasks);
+      const localTasks = await db.getAllTasks();
+      const localMap = new Map(localTasks.map(t => [t.id, t]));
+      
+      const tasksToPut = [];
+      
+      for (const remoteTask of state.tasks) {
+        const local = localMap.get(remoteTask.id);
+        if (!local) {
+          tasksToPut.push(remoteTask);
+        } else {
+          const localTime = new Date(local.updatedAt || local.createdAt || 0).getTime();
+          const remoteTime = new Date(remoteTask.updatedAt || remoteTask.createdAt || 0).getTime();
+          if (remoteTime > localTime) {
+            tasksToPut.push(remoteTask);
+          }
+        }
+      }
+      
+      if (tasksToPut.length > 0) {
+        console.log(`[Sync] Writing ${tasksToPut.length} new/updated tasks to local DB out of ${state.tasks.length} total.`);
+        const store = db._tx('tasks', 'readwrite');
+        await Promise.all(tasksToPut.map(t => db._request(store, 'put', t)));
+      } else {
+        console.log('[Sync] No local tasks updates needed.');
+      }
     }
 
     if (state.teamMembers && state.teamMembers.length > 0) {
-      await db.saveTeamMembers(state.teamMembers);
+      const localTeam = await db.getTeamMembers();
+      const localTeamStr = JSON.stringify(localTeam);
+      const remoteTeamStr = JSON.stringify(state.teamMembers);
+      if (localTeamStr !== remoteTeamStr) {
+        await db.saveTeamMembers(state.teamMembers);
+      }
     }
   }
 
